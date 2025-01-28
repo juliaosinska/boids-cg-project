@@ -6,7 +6,7 @@ Boid::Boid(glm::vec3 startPosition, glm::vec3 startVelocity, int groupID, glm::v
     : position(startPosition),
     velocity(startVelocity),
     acceleration(glm::vec3(0.0f)),
-    maxSpeed(0.1f),
+    maxSpeed(0.07f),
     maxForce(0.4f),
     angle(0.0f),
     perceptionRadius(1.5f),

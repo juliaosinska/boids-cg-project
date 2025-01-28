@@ -63,7 +63,7 @@ void renderBoids(std::vector<Boid>& boids, Shader& shaderProgram) {
 
         model = glm::translate(model, boid.position);
         model = glm::rotate(model, glm::radians(boid.angle), glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(0.05f));
+        model = glm::scale(model, glm::vec3(0.1f));
 
         shaderProgram.Activate();
         shaderProgram.SetMat4("modelMatrix", model);

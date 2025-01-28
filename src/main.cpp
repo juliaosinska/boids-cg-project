@@ -21,7 +21,7 @@ Core::RenderContext fishContext;
 GLuint fishNormalMap, fishTexture;
 
 glm::vec3 lightPos = glm::vec3(10.0f, 10.0f, 10.0f);
-glm::vec3 lightColor = glm::vec3(400.0f, 400.0f, 400.0f);
+glm::vec3 lightColor = glm::vec3(300.0f, 300.0f, 300.0f);
 glm::vec3 objectColor = glm::vec3(0.8f, 0.3f, 0.3f);
 
 //wyzwanie dla chetnych - przeniesc te dwa gowna do box.cpp i box.h tak zeby dzialalo 
@@ -210,7 +210,7 @@ int main() {
     // !!!!!!!!!!!!!!!!!!!!!!!!!
     std::vector<Boid> boids;
     loadModelToContext("../resources/models/fish.obj", fishContext);
-    setUpBoids(boids, 5, 1); // set up num of boid groups you want here : boids, num of groups, num of boids in each group
+    setUpBoids(boids, 5, 50); // set up num of boid groups you want here : boids, num of groups, num of boids in each group
     for (auto& boid : boids) {
         boid.context = &fishContext;
     }
