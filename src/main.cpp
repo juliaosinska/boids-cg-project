@@ -210,7 +210,7 @@ int main() {
     // !!!!!!!!!!!!!!!!!!!!!!!!!
     std::vector<Boid> boids;
     loadModelToContext("../resources/models/fish.obj", fishContext);
-    setUpBoids(boids, 5, 50); // set up num of boid groups you want here : boids, num of groups, num of boids in each group
+    setUpBoids(boids, 5, 1); // set up num of boid groups you want here : boids, num of groups, num of boids in each group
     for (auto& boid : boids) {
         boid.context = &fishContext;
     }
@@ -244,11 +244,14 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, fishTexture);
 
 
+        camera.Matrix(fishShader, "camMatrix");
+
+
         // set uniforms for fish shader
         fishShader.SetInt("fishNormalMap", 0);
         fishShader.SetInt("fishTexture", 1);
 
-        fishShader.SetMat4("transformation", camera.cameraMatrix);
+        fishShader.SetMat4("view", view);
         fishShader.SetMat4("modelMatrix", model);
         fishShader.SetVec3("lightPos", lightPos);
         fishShader.SetVec3("lightColor", lightColor);

@@ -7,8 +7,9 @@ layout(location = 1) in vec3 vertexNormal;
 layout(location = 2) in vec2 vertexTexCoord;
 layout(location = 3) in vec3 vertexTangent;
 
-uniform mat4 transformation;
+uniform mat4 view;
 uniform mat4 modelMatrix;
+uniform mat4 camMatrix;
 
 out vec2 fragTexCoord;
 out vec3 fragPosition;
@@ -30,5 +31,5 @@ void main()
     fragTexCoord = vertexTexCoord;
 
     // position (clip-space)
-    gl_Position = transformation * worldPosition;
+    gl_Position = camMatrix * view  * worldPosition;
 }
