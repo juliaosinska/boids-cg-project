@@ -17,70 +17,47 @@ Boid::Boid(glm::vec3 startPosition, glm::vec3 startVelocity, int groupID, glm::v
 void Boid::update(const std::vector<Boid>& boids) {
 
     // Define weights for the behaviors
-    float alignWeight = 0.1f; //zmniejszone sprawia ze ryby w malych stadach tak dziko nie wibruj¹
-    float cohesionWeight = 0.01f;
+    float alignWeight = 0.3f; //zmniejszone sprawia ze ryby w malych stadach tak dziko nie wibruj¹
+    float cohesionWeight = 0.05f;
     float separationWeight = 2.0f;
+
+    float wallAvoidanceWeight = 1.5f; 
 
     glm::vec3 alignForce = alignment(boids, perceptionRadius) * alignWeight;
     glm::vec3 cohesionForce = cohesion(boids, perceptionRadius) * cohesionWeight;
     glm::vec3 separationForce = separation(boids, 0.5f) * separationWeight;
 
+    // Apply wall avoidance force smoothly
+    glm::vec3 wallNormal = getBoundaryNormal(position);
+    if (glm::length(wallNormal) > 0.0f) {
+        glm::vec3 avoidanceForce = glm::normalize(wallNormal) * wallAvoidanceWeight;
+        applyForce(avoidanceForce);
+    }
 
     applyForce(alignForce);
-    if (isNearBoundary(position)) {
-        // also preventing clumping
-        cohesionForce *= 0.5f;
-        // this so they dont clump together as hard when they hit the walls
-        separationForce *= 0.5f;
-    }
     applyForce(cohesionForce);
     applyForce(separationForce);
-
-    //velocity += acceleration;
+    
     // make the velocity a bit smooter - the fish wont snap so hard anymore :(
     velocity = glm::mix(velocity, velocity + acceleration, 0.2f); 
     if (glm::length(velocity) > maxSpeed) {
         velocity = glm::normalize(velocity) * maxSpeed;
     }
-
-    if (glm::length(velocity) > maxSpeed) {
-        velocity = glm::normalize(velocity) * maxSpeed;
-    }
-
+    
     position += velocity;
     
-
     // define cube boundaries - if we want a bigger aquarium, gotta change it here
     const float boundaryThreshold = 1.0f;
     const float cubeMin = -10.0f;
     const float cubeMax = 10.0f;
 
-    if (position.x < cubeMin + boundaryThreshold) {
-        position.x = cubeMin + boundaryThreshold;
-        velocity.x = -velocity.x;
-    }
-    else if (position.x > cubeMax - boundaryThreshold) {
-        position.x = cubeMax - boundaryThreshold;
-        velocity.x = -velocity.x;
-    }
-
-    if (position.y < cubeMin + boundaryThreshold) {
-        position.y = cubeMin + boundaryThreshold;
-        velocity.y = -velocity.y;
-    }
-    else if (position.y > cubeMax - boundaryThreshold) {
-        position.y = cubeMax - boundaryThreshold;
-        velocity.y = -velocity.y;
-    }
-
-    if (position.z < cubeMin + boundaryThreshold) {
-        position.z = cubeMin + boundaryThreshold;
-        velocity.z = -velocity.z;
-    }
-    else if (position.z > cubeMax - boundaryThreshold) {
-        position.z = cubeMax - boundaryThreshold;
-        velocity.z = -velocity.z;
-    }
+    //if a fish manages to go through our wall avoidence, this will stop them from popping out of the box
+    if (position.x < cubeMin) position.x = cubeMin + boundaryThreshold;
+    if (position.x > cubeMax) position.x = cubeMax - boundaryThreshold;
+    if (position.y < cubeMin) position.y = cubeMin + boundaryThreshold;
+    if (position.y > cubeMax) position.y = cubeMax - boundaryThreshold;
+    if (position.z < cubeMin) position.z = cubeMin + boundaryThreshold;
+    if (position.z > cubeMax) position.z = cubeMax - boundaryThreshold;
 
     // reset acceleration for the next frame
     acceleration = glm::vec3(0.0f);
@@ -107,14 +84,23 @@ glm::vec3 Boid::getFishVelocity() {
     return forward;
 }
 
-bool Boid::isNearBoundary(const glm::vec3& position) {
+glm::vec3 Boid::getBoundaryNormal(glm::vec3& pos) {
+    glm::vec3 normal(0.0f);
+
+    const float boundaryThreshold = 1.0f;
     const float cubeMin = -10.0f;
     const float cubeMax = 10.0f;
-    const float boundaryThreshold = 1.0f; // Distance from boundary to consider "near"
 
-    return (position.x < cubeMin + boundaryThreshold || position.x > cubeMax - boundaryThreshold ||
-        position.y < cubeMin + boundaryThreshold || position.y > cubeMax - boundaryThreshold ||
-        position.z < cubeMin + boundaryThreshold || position.z > cubeMax - boundaryThreshold);
+    if (pos.x < cubeMin + boundaryThreshold) normal.x = 1.0f;
+    if (pos.x > cubeMax - boundaryThreshold) normal.x = -1.0f;
+
+    if (pos.y < cubeMin + boundaryThreshold) normal.y = 1.0f;
+    if (pos.y > cubeMax - boundaryThreshold) normal.y = -1.0f;
+
+    if (pos.z < cubeMin + boundaryThreshold) normal.z = 1.0f;
+    if (pos.z > cubeMax - boundaryThreshold) normal.z = -1.0f;
+
+    return normal;
 }
 
 void Boid::applyForce(glm::vec3 force) {

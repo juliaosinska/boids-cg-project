@@ -24,57 +24,6 @@ glm::vec3 lightPos = glm::vec3(10.0f, 10.0f, 10.0f);
 glm::vec3 lightColor = glm::vec3(300.0f, 300.0f, 300.0f);
 glm::vec3 objectColor = glm::vec3(0.8f, 0.3f, 0.3f);
 
-//wyzwanie dla chetnych - przeniesc te dwa gowna do box.cpp i box.h tak zeby dzialalo 
-//bo ja juz sie poddaje, wiec chwilowo niech zasmiecaja maina
-
-GLfloat boxVertices[] = {
-    //     COORDINATES      //    COLORS  //      NORMALS    
-   -0.1f, -0.1f,  0.1f,  0.8f, 0.52f, 0.25f,   0.0f, 1.0f,  // Front face
-     0.1f, -0.1f,  0.1f,  0.8f, 0.52f, 0.25f,   1.0f, -1.0f,  // Back face
-     0.1f,  0.1f,  0.1f,  0.8f, 0.52f, 0.25f,   1.0f, -1.0f,  // Back face
-     -0.1f,  0.1f,  0.1f,  0.8f, 0.52f, 0.25f,   0.0f, 1.0f,  // Front face
-
-     -0.1f, -0.1f, -0.1f,  0.8f, 0.52f, 0.25f,   0.0f, 1.0f,  // Top face
-     0.1f, -0.1f, -0.1f,   0.8f, 0.52f, 0.25f,  0.0f, -1.0f,  // Bottom face
-     0.1f,  0.1f, -0.1f,  0.8f, 0.52f, 0.25f,   0.0f, -1.0f,  // Bottom face
-     -0.1f,  0.1f, -0.1f,   0.8f, 0.52f, 0.25f,   0.0f, 1.0f   // Top face
-};
-
-GLuint boxIndices[] = {
-    // Front face
-    0, 1,
-    1, 2,
-    2, 3,
-    3, 0,
-
-    // Back face
-    4, 5,
-    5, 6,
-    6, 7,
-    7, 4,
-
-    // Left face
-    0, 4,
-    1, 5,
-    2, 6,
-    3, 7,
-
-    // Right face
-    0, 5,
-    1, 4,
-    2, 7,
-    3, 6,
-
-    // Top face
-    3, 2,
-    7, 6,
-
-    // Bottom face
-    0, 1,
-    4, 5
-};
-
-
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -210,7 +159,7 @@ int main() {
     // !!!!!!!!!!!!!!!!!!!!!!!!!
     std::vector<Boid> boids;
     loadModelToContext("../resources/models/fish.obj", fishContext);
-    setUpBoids(boids, 2, 150); // set up num of boid groups you want here : boids, num of groups, num of boids in each group
+    setUpBoids(boids, 1, 150); // set up num of boid groups you want here : boids, num of groups, num of boids in each group
     for (auto& boid : boids) {
         boid.context = &fishContext;
     }

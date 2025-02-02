@@ -36,6 +36,7 @@ public:
     void applyForce(glm::vec3 force);
 
     bool isNearBoundary(const glm::vec3& position);
+    glm::vec3 getBoundaryNormal(glm::vec3& pos);
 
     glm::vec2 getFishYawAndPitch();
     glm::vec3 getFishVelocity();
