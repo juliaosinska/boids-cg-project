@@ -210,7 +210,7 @@ int main() {
     // !!!!!!!!!!!!!!!!!!!!!!!!!
     std::vector<Boid> boids;
     loadModelToContext("../resources/models/fish.obj", fishContext);
-    setUpBoids(boids, 5, 50); // set up num of boid groups you want here : boids, num of groups, num of boids in each group
+    setUpBoids(boids, 2, 150); // set up num of boid groups you want here : boids, num of groups, num of boids in each group
     for (auto& boid : boids) {
         boid.context = &fishContext;
     }
@@ -279,7 +279,7 @@ int main() {
         
         
         // boid rendering and updating
-        for (auto& boid : boids) {
+        for (auto& boid : boids) {       
             boid.update(boids);          
         }
         renderBoids(boids, fishShader);

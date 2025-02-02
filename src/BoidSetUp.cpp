@@ -59,16 +59,36 @@ void setupPyramid() {
 
 void renderBoids(std::vector<Boid>& boids, Shader& shaderProgram) {
     for (Boid& boid : boids) {
+        //glm::vec2 yawPitch = boid.getFishYawAndPitch(); 
+        //float yaw = yawPitch.x;   // Yaw angle (left/right rotation)
+        //float pitch = yawPitch.y; // Pitch angle (up/down rotation)
+        
+        glm::vec3 forward = boid.getFishVelocity();
+        
+        if (glm::length(forward) < 1e-6f) {
+            forward = glm::vec3(1.0f, 0.0f, 0.0f); // default all fish to face right if no movement
+        }
+        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f); // World up
+        glm::vec3 right = glm::normalize(glm::cross(up, forward)); // Perpendicular right
+        glm::vec3 adjustedUp = glm::cross(forward, right);
+
+        // create a rotation matrix from these vectors
+        glm::mat4 rotation = glm::mat4(1.0f);
+        rotation[0] = glm::vec4(right, 0.0f); 
+        rotation[1] = glm::vec4(adjustedUp, 0.0f); 
+        rotation[2] = glm::vec4(forward, 0.0f);
+        
         glm::mat4 model = glm::mat4(1.0f);
 
         model = glm::translate(model, boid.position);
-        model = glm::rotate(model, glm::radians(boid.angle), glm::vec3(0.0f, 1.0f, 0.0f));
+        //model = glm::rotate(model, glm::radians(boid.angle), glm::vec3(0.0f, 1.0f, 0.0f));
+        /*model = glm::rotate(model, glm::radians(pitch), glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::rotate(model, glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));*/
+        model *= rotation; // makes our fish more bendy and natural !
         model = glm::scale(model, glm::vec3(0.1f));
 
         shaderProgram.Activate();
         shaderProgram.SetMat4("modelMatrix", model);
-
-        shaderProgram.Activate();
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
         if (boid.context) {

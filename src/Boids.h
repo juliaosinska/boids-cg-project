@@ -37,6 +37,9 @@ public:
 
     bool isNearBoundary(const glm::vec3& position);
 
+    glm::vec2 getFishYawAndPitch();
+    glm::vec3 getFishVelocity();
+
     // flocking behaviors
     glm::vec3 separation(const std::vector<Boid>& boids, float desiredSeparation);
     glm::vec3 alignment(const std::vector<Boid>& boids, float neighborDist);

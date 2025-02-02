@@ -6,8 +6,8 @@ Boid::Boid(glm::vec3 startPosition, glm::vec3 startVelocity, int groupID, glm::v
     : position(startPosition),
     velocity(startVelocity),
     acceleration(glm::vec3(0.0f)),
-    maxSpeed(0.07f),
-    maxForce(0.4f),
+    maxSpeed(0.03f),
+    maxForce(0.01f),
     angle(0.0f),
     perceptionRadius(1.5f),
     groupID(groupID),
@@ -17,13 +17,13 @@ Boid::Boid(glm::vec3 startPosition, glm::vec3 startVelocity, int groupID, glm::v
 void Boid::update(const std::vector<Boid>& boids) {
 
     // Define weights for the behaviors
-    float alignWeight = 0.5f; //zmniejszone sprawia ze ryby w malych stadach tak dziko nie wibruj¹
+    float alignWeight = 0.1f; //zmniejszone sprawia ze ryby w malych stadach tak dziko nie wibruj¹
     float cohesionWeight = 0.01f;
-    float separationWeight = 3.0f;
+    float separationWeight = 2.0f;
 
     glm::vec3 alignForce = alignment(boids, perceptionRadius) * alignWeight;
     glm::vec3 cohesionForce = cohesion(boids, perceptionRadius) * cohesionWeight;
-    glm::vec3 separationForce = separation(boids, 0.2f) * separationWeight;
+    glm::vec3 separationForce = separation(boids, 0.5f) * separationWeight;
 
 
     applyForce(alignForce);
@@ -31,18 +31,24 @@ void Boid::update(const std::vector<Boid>& boids) {
         // also preventing clumping
         cohesionForce *= 0.5f;
         // this so they dont clump together as hard when they hit the walls
-        separationForce *= 2.0f;
+        separationForce *= 0.5f;
     }
     applyForce(cohesionForce);
     applyForce(separationForce);
 
-    velocity += acceleration;
+    //velocity += acceleration;
+    // make the velocity a bit smooter - the fish wont snap so hard anymore :(
+    velocity = glm::mix(velocity, velocity + acceleration, 0.2f); 
+    if (glm::length(velocity) > maxSpeed) {
+        velocity = glm::normalize(velocity) * maxSpeed;
+    }
 
     if (glm::length(velocity) > maxSpeed) {
         velocity = glm::normalize(velocity) * maxSpeed;
     }
 
     position += velocity;
+    
 
     // define cube boundaries - if we want a bigger aquarium, gotta change it here
     const float boundaryThreshold = 1.0f;
@@ -83,6 +89,24 @@ void Boid::update(const std::vector<Boid>& boids) {
     angle = glm::degrees(atan2(velocity.z, velocity.x));
 }
 
+glm::vec2 Boid::getFishYawAndPitch() {
+    float yaw = glm::degrees(atan2(velocity.z, velocity.x));
+
+    float horizontalSpeed = glm::length(glm::vec2(velocity.x, velocity.z));
+    if (horizontalSpeed < 1e-6f) horizontalSpeed = 1e-6f; // prevent division by zero
+
+    float pitch = glm::degrees(atan2(velocity.y, horizontalSpeed));
+
+    glm::vec3 forward = glm::normalize(velocity);
+
+    return glm::vec2(yaw, pitch);
+}
+
+glm::vec3 Boid::getFishVelocity() {
+    glm::vec3 forward = glm::normalize(velocity);
+    return forward;
+}
+
 bool Boid::isNearBoundary(const glm::vec3& position) {
     const float cubeMin = -10.0f;
     const float cubeMax = 10.0f;
@@ -108,8 +132,7 @@ glm::vec3 Boid::alignment(const std::vector<Boid>& boids, float neighborDist) {
                 steering += other.velocity; // Add neighbor's velocity
                 total++;
             }
-        }
-        
+        }      
     }
 
     if (total > 0) {
