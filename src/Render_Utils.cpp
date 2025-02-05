@@ -120,8 +120,10 @@ void Core::RenderContext::initFromAssimpMesh(aiMesh* mesh) {
     // Store the number of indices for rendering
     indexCount = indices.size();
 
+
     std::cout << "Mesh loaded successfully with " << mesh->mNumVertices << " vertices and " << indexCount << " indices.\n";
 }
+
 
 void Core::DrawVertexArray(const float * vertexArray, int numVertices, int elementSize )
 {

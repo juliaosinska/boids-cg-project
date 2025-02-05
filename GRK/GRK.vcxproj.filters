@@ -72,9 +72,6 @@
     <ClCompile Include="..\src\BoidSetUp.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Box.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Camera.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>

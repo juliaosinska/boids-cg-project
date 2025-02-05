@@ -5,6 +5,7 @@
 #include "ShaderClass.h"
 #include "boidSetUp.h"
 #include "boids.h" 
+#include "Render_Utils.h"
 
 
 // Pyramid vertices
@@ -59,10 +60,6 @@ void setupPyramid() {
 
 void renderBoids(std::vector<Boid>& boids, Shader& shaderProgram) {
     for (Boid& boid : boids) {
-        //glm::vec2 yawPitch = boid.getFishYawAndPitch(); 
-        //float yaw = yawPitch.x;   // Yaw angle (left/right rotation)
-        //float pitch = yawPitch.y; // Pitch angle (up/down rotation)
-        
         glm::vec3 forward = boid.getFishVelocity();
         
         if (glm::length(forward) < 1e-6f) {
@@ -81,12 +78,9 @@ void renderBoids(std::vector<Boid>& boids, Shader& shaderProgram) {
         glm::mat4 model = glm::mat4(1.0f);
 
         model = glm::translate(model, boid.position);
-        //model = glm::rotate(model, glm::radians(boid.angle), glm::vec3(0.0f, 1.0f, 0.0f));
-        /*model = glm::rotate(model, glm::radians(pitch), glm::vec3(0.0f, 0.0f, 1.0f));
-        model = glm::rotate(model, glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));*/
         model *= rotation; // makes our fish more bendy and natural !
         model = glm::scale(model, glm::vec3(0.1f));
-
+        
         shaderProgram.Activate();
         shaderProgram.SetMat4("modelMatrix", model);
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));

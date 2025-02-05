@@ -41,7 +41,6 @@
     <ClCompile Include="..\include\glad.c" />
     <ClCompile Include="..\src\Boids.cpp" />
     <ClCompile Include="..\src\BoidSetUp.cpp" />
-    <ClCompile Include="..\src\Box.cpp" />
     <ClCompile Include="..\src\Camera.cpp" />
     <ClCompile Include="..\src\EBO.cpp" />
     <ClCompile Include="..\src\main.cpp" />
