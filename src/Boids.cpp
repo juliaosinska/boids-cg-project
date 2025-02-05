@@ -21,15 +21,15 @@ void Boid::update(const std::vector<Boid>& boids) {
     const float cubeMax = 10.0f;
 
     // Define weights for the behaviors
-    float alignWeight = 0.5f; //zmniejszone sprawia ze ryby w malych stadach tak dziko nie wibruj¹
-    float cohesionWeight = 0.04f;
-    float separationWeight = 2.0f;
+    float alignWeight = 0.4f; //zmniejszone sprawia ze ryby w malych stadach tak dziko nie wibruj¹
+    float cohesionWeight = 0.02f;
+    float separationWeight = 0.3f;
 
     float wallAvoidanceWeight = 0.5f; 
 
     glm::vec3 alignForce = alignment(boids, perceptionRadius) * alignWeight;
     glm::vec3 cohesionForce = cohesion(boids, perceptionRadius) * cohesionWeight;
-    glm::vec3 separationForce = separation(boids, 0.35f) * separationWeight;
+    glm::vec3 separationForce = separation(boids, 1.0f) * separationWeight; // the allowed distance for boids to be in
 
     glm::vec4 wallNormalAndDistance = getBoundaryNormalAndDistance(position);
     glm::vec3 wallNormal = glm::vec3(wallNormalAndDistance);
