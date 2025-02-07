@@ -1,4 +1,5 @@
 #include "Boids.h"
+#include "Column.h"
 
 
 // tutaj mozna cos zdynamizowac, idk dac uzytkownikowi moc zmieniania maxSpeed boidow?
@@ -20,11 +21,11 @@ Boid::Boid(glm::vec3 startPosition, glm::vec3 startVelocity, int groupID, glm::v
     obb.axes[1] = glm::vec3(0.0f, 1.0f, 0.0f); // Y-axis
     obb.axes[2] = glm::vec3(0.0f, 0.0f, 1.0f); // Z-axix
 
-    obb.halfExtents = glm::vec3(0.65f, 0.2f, 0.1f); // this is the size of our fish hitbox
+    obb.halfExtents = glm::vec3(0.6f, 0.3f, 0.2f); // this is the size of our fish hitbox
     //could add something dynamic here mayhaps?
 }
 
-void Boid::update(const std::vector<Boid>& boids, float deltaTime) {
+void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::vector<Column>& columns) {
     // define cube boundaries - if we want a bigger aquarium, gotta change it here
     const float boundaryThreshold = 1.0f;
     const float cubeMin = -10.0f;
@@ -32,8 +33,8 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime) {
 
     // Define weights for the behaviors
     float alignWeight = 0.4f; //zmniejszone sprawia ze ryby w malych stadach tak dziko nie wibruj¹
-    float cohesionWeight = 0.03f;
-    float separationWeight = 0.3f;
+    float cohesionWeight = 0.04f;
+    float separationWeight = 0.2f;
 
     float wallAvoidanceWeight = 0.5f; 
 
@@ -44,7 +45,7 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime) {
     glm::vec4 wallNormalAndDistance = getBoundaryNormalAndDistance(position);
     glm::vec3 wallNormal = glm::vec3(wallNormalAndDistance);
     float distToWall = wallNormalAndDistance.w;
-    
+
     // this will cause our fish to turn gracefully
     if (distToWall < 5.0f) {
         float avoidStrength = glm::clamp(1.0f - (distToWall / 5.0f), 0.0f, 1.0f); // Stronger closer to the wall
@@ -79,12 +80,13 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime) {
     position += velocity ;
     
     //if a fish manages to go through our wall avoidence, this will stop them from popping out of the box
-    if (position.x < cubeMin) position.x = cubeMin + boundaryThreshold;
-    if (position.x > cubeMax) position.x = cubeMax - boundaryThreshold;
-    if (position.y < cubeMin) position.y = cubeMin + boundaryThreshold;
-    if (position.y > cubeMax) position.y = cubeMax - boundaryThreshold;
-    if (position.z < cubeMin) position.z = cubeMin + boundaryThreshold;
-    if (position.z > cubeMax) position.z = cubeMax - boundaryThreshold;
+    if (position.x < cubeMin) position.x = cubeMin + boundaryThreshold - 0.8f;
+    if (position.x > cubeMax) position.x = cubeMax - boundaryThreshold + 0.8f;
+    if (position.y < cubeMin) position.y = cubeMin + boundaryThreshold - 0.8f;
+    if (position.y > cubeMax) position.y = cubeMax - boundaryThreshold + 0.8f;
+    if (position.z < cubeMin) position.z = cubeMin + boundaryThreshold - 0.8f;
+    if (position.z > cubeMax) position.z = cubeMax - boundaryThreshold + 0.8f;
+
     
 
     // reset acceleration for the next frame
@@ -180,6 +182,50 @@ void  Boid::handleCollision(Boid& boid1, Boid& boid2) {
 
     boid1.hasCollided = true;
     boid2.hasCollided = true;
+}
+
+void Boid::handleCollisionWithColumn(Boid& boid, const Column& column) {
+    // Calculate the direction to the column
+    glm::vec3 dirToColumn = position - column.position;
+    float distToColumn = glm::length(dirToColumn);
+
+    // check if the boid is too close to the column along any axis
+    if (distToColumn < glm::length(column.obb.halfExtents) * 1.1f) {
+        // relative position of the boid in the column's local space
+        glm::vec3 localPos = position - column.position;
+
+        // Project the boid's position onto the column's axes
+        glm::vec3 projection;
+        for (int i = 0; i < 3; ++i) {
+            projection[i] = glm::dot(localPos, column.obb.axes[i]);
+        }
+
+        // we must check for overlap in diff axes
+        glm::vec3 overlap = glm::vec3(0.0f);
+        for (int i = 0; i < 3; ++i) {
+            if (std::abs(projection[i]) > column.obb.halfExtents[i]) {
+                overlap[i] = (std::abs(projection[i]) - column.obb.halfExtents[i]);
+            }
+        }
+
+        // if there is overlap along any axis, push the boid away !
+        if (glm::length(overlap) > 0.0f) {
+            glm::vec3 pushDirection = glm::normalize(dirToColumn); // Direction away from the column
+
+            if (std::abs(overlap.y) > 0.0f) {
+                // Prefer to push the boid around the column on the X-Z plane rather than up or down
+                glm::vec3 horizontalPushDirection = glm::normalize(glm::vec3(dirToColumn.x, 0.0f, dirToColumn.z)); // Ignore Y-axis
+                pushDirection = horizontalPushDirection;  // Redirect to X-Z plane
+            }
+
+            // apply force to push the boid out along the axis with the most overlap
+            glm::vec3 pushForce = pushDirection * glm::length(overlap) * 1.1f;  
+            applyForce(pushForce);
+
+            // change velocity to prevent fish from quickly re-entering the column
+            velocity = glm::normalize(velocity) * maxSpeed;
+        }
+    }
 }
 
 glm::vec3 Boid::alignment(const std::vector<Boid>& boids, float neighborDist) {

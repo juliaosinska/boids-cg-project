@@ -5,6 +5,7 @@
 #include <vector>
 #include "Render_Utils.h"
 #include "obb.h"
+#include "Column.h"
 
 // this file just contains the blueprint for the boids class
 class Boid {
@@ -34,7 +35,7 @@ public:
     Boid(glm::vec3 startPosition, glm::vec3 startVelocity, int groupID, glm::vec3 color);
 
     // update the boid's position and velocity
-    void update(const std::vector<Boid>& boids, float deltaTime);
+    void update(const std::vector<Boid>& boids, float deltaTime, const std::vector<Column>& columns);
 
     // apply a force to the boid
     void applyForce(glm::vec3 force);
@@ -47,6 +48,7 @@ public:
 
     glm::vec3 getBoidPosition(const std::vector<Boid>& boids);
     void handleCollision(Boid& boid1, Boid& boid2);
+    void handleCollisionWithColumn(Boid& boid,const Column& column);
 
     // flocking behaviors
     glm::vec3 separation(const std::vector<Boid>& boids, float desiredSeparation);

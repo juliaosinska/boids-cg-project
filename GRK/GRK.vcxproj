@@ -23,12 +23,15 @@
     <None Include="..\shaders\cube.vert" />
     <None Include="..\shaders\fish_shader.frag" />
     <None Include="..\shaders\fish_shader.vert" />
+    <None Include="..\src\col.frag" />
+    <None Include="..\src\col.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Boids.h" />
     <ClInclude Include="..\src\BoidSetUp.h" />
     <ClInclude Include="..\src\Box.h" />
     <ClInclude Include="..\src\Camera.h" />
+    <ClInclude Include="..\src\Column.h" />
     <ClInclude Include="..\src\EBO.h" />
     <ClInclude Include="..\src\obb.h" />
     <ClInclude Include="..\src\objload.h" />
@@ -43,6 +46,7 @@
     <ClCompile Include="..\src\Boids.cpp" />
     <ClCompile Include="..\src\BoidSetUp.cpp" />
     <ClCompile Include="..\src\Camera.cpp" />
+    <ClCompile Include="..\src\column.cpp" />
     <ClCompile Include="..\src\EBO.cpp" />
     <ClCompile Include="..\src\imgui.cpp" />
     <ClCompile Include="..\src\imgui_draw.cpp" />
@@ -54,6 +58,7 @@
     <ClCompile Include="..\src\obb.cpp" />
     <ClCompile Include="..\src\Render_Utils.cpp" />
     <ClCompile Include="..\src\ShaderClass.cpp" />
+    <ClCompile Include="..\src\Source.cpp" />
     <ClCompile Include="..\src\stb_image.cpp" />
     <ClCompile Include="..\src\VAO.cpp" />
     <ClCompile Include="..\src\VBO.cpp" />

@@ -20,6 +20,7 @@
 #include "obb.h"
 #include <chrono>
 #include <thread>
+#include "Column.h"
 
 const float panelWidth = 300.0f;
 
@@ -46,68 +47,13 @@ glm::vec3 objectColor = glm::vec3(0.8f, 0.3f, 0.3f);
 GLfloat columnVertices[216];  // size is 36 segments * 6 values per segment (2 triangles per segment)
 GLuint columnVBO, columnVAO;
 
-void generateColumn() {
-    int numSegments = 36; // number of segments in the cylinder base
-    float radius = 1.0f;
-    float height = 2.0f;
-
-    // populate the static array with vertex data
-    for (int i = 0; i < numSegments; ++i) {
-        float angle = 2.0f * glm::pi<float>() * i / numSegments;
-        float x = radius * cos(angle);
-        float z = radius * sin(angle);
-
-        // bottom and Top vertices (each segment has 2 triangles, 6 values)
-        columnVertices[i * 6 + 0] = x;   // Vertex x (bottom)
-        columnVertices[i * 6 + 1] = 0.0f; // Vertex y (bottom)
-        columnVertices[i * 6 + 2] = z;   // Vertex z (bottom)
-
-        columnVertices[i * 6 + 3] = x;   // Vertex x (top)
-        columnVertices[i * 6 + 4] = height; // Vertex y (top)
-        columnVertices[i * 6 + 5] = z;   // Vertex z (top)
-    }
-
-    // generate and bind VBO (Vertex Buffer Object)
-    glGenBuffers(1, &columnVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, columnVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(columnVertices), columnVertices, GL_STATIC_DRAW);
-
-    // generate and bind VAO (Vertex Array Object)
-    glGenVertexArrays(1, &columnVAO);
-    glBindVertexArray(columnVAO);
-
-    // link VBO with the vertex attributes
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0); // Position
-    glEnableVertexAttribArray(0); // Enable vertex attribute at index 0
-
-    // unbind VAO and VBO (to avoid accidental changes)
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-void renderColumn(Shader& shaderProgram, Camera camera) {
-    shaderProgram.Activate();
-    glUniform3f(glGetUniformLocation(shaderProgram.ID, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-    shaderProgram.Activate();
-    camera.Matrix(shaderProgram, "camMatrix");
-
-    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -30.0f));
-    GLuint modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
-    GLuint viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
-
-
-    glm::mat4 columnModel = glm::mat4(1.0f);
-    columnModel = glm::translate(columnModel, glm::vec3(1, 0.0f, 1));
-    columnModel = glm::scale(columnModel, glm::vec3(2.2f, 2.0f, 2.2f));
-   
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(columnModel));
-
-    // use the VAO to render the object
-    glBindVertexArray(columnVAO);
-    glDrawArrays(GL_LINES, 0, 36 * 2); // render 36 segments (2 vertices per segment)
-    glBindVertexArray(0);
-}
+//void generateColumn() {
+//    return
+//}
+//
+//void renderColumn(Shader& shaderProgram, Camera camera) {
+//    return
+//}
 
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -491,12 +437,33 @@ int main() {
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
         boxVAO.Bind();
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        // draws wire cube for the boids to fly in
+        glUniform3fv(glGetUniformLocation(shaderProgram.ID, "color"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
+        glDrawElements(GL_LINES, sizeof(boxIndices) / sizeof(int), GL_UNSIGNED_INT, 0);
+        
+        //column rendering
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        std::vector<Column> columns = {
+            {glm::vec3(5.0f, -2.0f, 5.0f), glm::vec3(3.0f, 80.0f, 3.0f)},
+            {glm::vec3(-5.0f, -4.0f, -5.0f), glm::vec3(3.0f, 60.0f, 3.0f)}
+        };
+
+
+        for (auto& column : columns) {
+            initializeColumnOBB(column);
+
+            glm::mat4 columnModel = glm::mat4(1.0f);
+            columnModel = glm::translate(columnModel, column.position);
+            columnModel = glm::scale(columnModel, column.size);
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(columnModel));
+            glUniform3fv(glGetUniformLocation(shaderProgram.ID, "color"), 1, glm::value_ptr(glm::vec3(0.8f, 0.8f, 0.8f)));
+            glDrawElements(GL_LINES, sizeof(boxIndices) / sizeof(int), GL_UNSIGNED_INT, 0);
+        }
 
         ///////////////// boid rendering /////////////////
 
-        // draws wire cube for the boids to fly in
-        glUniform3fv(glGetUniformLocation(shaderProgram.ID, "color"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
-        glDrawElements(GL_LINES, sizeof(boxIndices)/ sizeof(int), GL_UNSIGNED_INT, 0); 
         
         for (auto& boid : boids) {
             boid.hasCollided = false; // reset collision state at the start of the frame
@@ -511,10 +478,16 @@ int main() {
                     }
                 }  
             }
+            for (const auto& column : columns) {
+                if (checkOBBCollision(boid.obb, column.obb)) {
+                    boid.handleCollisionWithColumn(boid, column);  // Handle column collision logic
+                }
+                
+            }
         }
 
         for (auto& boid : boids) {
-            boid.update(boids, deltaTime);
+            boid.update(boids, deltaTime, columns);
         }
 
         renderBoids(boids, fishShader);
