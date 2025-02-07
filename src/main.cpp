@@ -43,21 +43,21 @@ glm::vec3 lightColor = glm::vec3(300.0f, 300.0f, 300.0f);
 glm::vec3 objectColor = glm::vec3(0.8f, 0.3f, 0.3f);
 
 
-GLfloat columnVertices[216];  // Size is 36 segments * 6 values per segment (2 triangles per segment)
+GLfloat columnVertices[216];  // size is 36 segments * 6 values per segment (2 triangles per segment)
 GLuint columnVBO, columnVAO;
 
 void generateColumn() {
-    int numSegments = 36; // Number of segments in the cylinder base
+    int numSegments = 36; // number of segments in the cylinder base
     float radius = 1.0f;
     float height = 2.0f;
 
-    // Populate the static array with vertex data
+    // populate the static array with vertex data
     for (int i = 0; i < numSegments; ++i) {
         float angle = 2.0f * glm::pi<float>() * i / numSegments;
         float x = radius * cos(angle);
         float z = radius * sin(angle);
 
-        // Bottom and Top vertices (each segment has 2 triangles, 6 values)
+        // bottom and Top vertices (each segment has 2 triangles, 6 values)
         columnVertices[i * 6 + 0] = x;   // Vertex x (bottom)
         columnVertices[i * 6 + 1] = 0.0f; // Vertex y (bottom)
         columnVertices[i * 6 + 2] = z;   // Vertex z (bottom)
@@ -67,20 +67,20 @@ void generateColumn() {
         columnVertices[i * 6 + 5] = z;   // Vertex z (top)
     }
 
-    // Generate and bind VBO (Vertex Buffer Object)
+    // generate and bind VBO (Vertex Buffer Object)
     glGenBuffers(1, &columnVBO);
     glBindBuffer(GL_ARRAY_BUFFER, columnVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(columnVertices), columnVertices, GL_STATIC_DRAW);
 
-    // Generate and bind VAO (Vertex Array Object)
+    // generate and bind VAO (Vertex Array Object)
     glGenVertexArrays(1, &columnVAO);
     glBindVertexArray(columnVAO);
 
-    // Link VBO with the vertex attributes
+    // link VBO with the vertex attributes
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0); // Position
     glEnableVertexAttribArray(0); // Enable vertex attribute at index 0
 
-    // Unbind VAO and VBO (to avoid accidental changes)
+    // unbind VAO and VBO (to avoid accidental changes)
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
@@ -103,9 +103,9 @@ void renderColumn(Shader& shaderProgram, Camera camera) {
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(columnModel));
 
-    // Use the VAO to render the object
+    // use the VAO to render the object
     glBindVertexArray(columnVAO);
-    glDrawArrays(GL_LINES, 0, 36 * 2); // Render 36 segments (2 vertices per segment)
+    glDrawArrays(GL_LINES, 0, 36 * 2); // render 36 segments (2 vertices per segment)
     glBindVertexArray(0);
 }
 
@@ -270,8 +270,6 @@ int main() {
     }
     glViewport(0, 0, windowWidth, windowHeight);
 
-    
-
     // imgui initialization
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -331,13 +329,13 @@ int main() {
         boid.context = &fishContext;
     }
 
-    //caluculate delta time to regulate speed with the frame rate
+    // calculate delta time to regulate speed with the frame rate
     auto lastTime = std::chrono::high_resolution_clock::now();
     float deltaTime = 0.0f;
     int frameCount = 0;
     double fpsTimer = 0.0;
 
-    //change here if your pc can make it
+    // change here if your pc can make it
     const int targetFPS = 60;
     const float targetFrameTime = 1.0f / targetFPS;
 
@@ -349,7 +347,7 @@ int main() {
         if (deltaTime < targetFrameTime) {
             float sleepTime = targetFrameTime - deltaTime;
             std::this_thread::sleep_for(std::chrono::duration<float>(sleepTime));
-            deltaTime = targetFrameTime; // Prevent too small delta times
+            deltaTime = targetFrameTime; // prevent too small delta times
         }
 
         // FPS Calculation - uncomment to see fps each sec
@@ -530,7 +528,7 @@ int main() {
         glfwPollEvents();
 
         //auto currentTime = std::chrono::high_resolution_clock::now();
-       // deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+        //deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
         lastTime = currentTime;
         
     }
