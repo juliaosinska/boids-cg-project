@@ -18,6 +18,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "obb.h"
+#include <chrono>
 
 const float panelWidth = 300.0f;
 
@@ -282,6 +283,8 @@ int main() {
     }
     glViewport(panelWidth, 0, renderingWidth, renderingHeight);
 
+    
+
     // imgui initialization
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -344,7 +347,15 @@ int main() {
         boid.context = &fishContext;
     }
 
+    //caluculate delta time to regulate speed with the frame rate
+    auto lastTime = std::chrono::high_resolution_clock::now();
+
     while (!glfwWindowShouldClose(window)) {
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+        lastTime = currentTime;
+
+
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         processInput(window);
 
@@ -501,7 +512,7 @@ int main() {
         }
 
         for (auto& boid : boids) {
-            boid.update(boids);
+            boid.update(boids, deltaTime);
         }
 
         renderBoids(boids, fishShader);

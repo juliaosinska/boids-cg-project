@@ -20,11 +20,11 @@ Boid::Boid(glm::vec3 startPosition, glm::vec3 startVelocity, int groupID, glm::v
     obb.axes[1] = glm::vec3(0.0f, 1.0f, 0.0f); // Y-axis
     obb.axes[2] = glm::vec3(0.0f, 0.0f, 1.0f); // Z-axix
 
-    obb.halfExtents = glm::vec3(0.65f, 0.08f, 0.05f); // this is the size of our fish hitbox
+    obb.halfExtents = glm::vec3(0.65f, 0.2f, 0.1f); // this is the size of our fish hitbox
     //could add something dynamic here mayhaps?
 }
 
-void Boid::update(const std::vector<Boid>& boids) {
+void Boid::update(const std::vector<Boid>& boids, float deltaTime) {
     // define cube boundaries - if we want a bigger aquarium, gotta change it here
     const float boundaryThreshold = 1.0f;
     const float cubeMin = -10.0f;
@@ -32,7 +32,7 @@ void Boid::update(const std::vector<Boid>& boids) {
 
     // Define weights for the behaviors
     float alignWeight = 0.4f; //zmniejszone sprawia ze ryby w malych stadach tak dziko nie wibruj¹
-    float cohesionWeight = 0.02f;
+    float cohesionWeight = 0.03f;
     float separationWeight = 0.3f;
 
     float wallAvoidanceWeight = 0.5f; 
@@ -155,7 +155,7 @@ void Boid::applyForce(glm::vec3 force) {
 }
 
 void  Boid::handleCollision(Boid& boid1, Boid& boid2) {
-    // Find the vector between the two boids
+    //vector between the two boids
     glm::vec3 collisionNormal = glm::normalize(boid1.position - boid2.position);
 
     if (glm::length(collisionNormal) < 1e-6f) {
@@ -167,7 +167,7 @@ void  Boid::handleCollision(Boid& boid1, Boid& boid2) {
 
     if(velocityAlongNormal > 0) return; // this means the boids are already moving apart, so everything good
 
-    float e = 0.5f; // Elasticity (bounce factor). 1 is a perfect bounce, less than 1 is inelastic.
+    float e = 0.2f; // Elasticity (bounce factor). 1 is a perfect bounce, less than 1 is inelastic.
     float j = -(1 + e) * velocityAlongNormal;
 
     // Apply the impulse to each boid (basic response without mass for simplicity)

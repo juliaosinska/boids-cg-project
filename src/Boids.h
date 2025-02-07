@@ -34,7 +34,7 @@ public:
     Boid(glm::vec3 startPosition, glm::vec3 startVelocity, int groupID, glm::vec3 color);
 
     // update the boid's position and velocity
-    void update(const std::vector<Boid>& boids);
+    void update(const std::vector<Boid>& boids, float deltaTime);
 
     // apply a force to the boid
     void applyForce(glm::vec3 force);

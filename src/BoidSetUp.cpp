@@ -116,9 +116,9 @@ void setUpBoids(std::vector<Boid>& boids, int numGroups, int numBoidsPerGroup) {
     for (int group = 0; group < numGroups; ++group) {
         // Assign a unique position offset for each group to separate them
         glm::vec3 groupOffset(
+            static_cast<float>(rand() % 220 - 100) / 10.0f,
             static_cast<float>(rand() % 200 - 100) / 10.0f,
-            static_cast<float>(rand() % 200 - 100) / 10.0f,
-            static_cast<float>(rand() % 200 - 100) / 10.0f
+            static_cast<float>(rand() % 240 - 100) / 10.0f
         );
 
         for (int i = 0; i < numBoidsPerGroup; ++i) {
