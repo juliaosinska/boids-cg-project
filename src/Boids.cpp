@@ -33,14 +33,21 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::ve
 
     // Define weights for the behaviors
     float alignWeight = 0.4f; //zmniejszone sprawia ze ryby w malych stadach tak dziko nie wibruj¹
-    float cohesionWeight = 0.04f;
-    float separationWeight = 0.2f;
+    float cohesionWeight = 0.03f;
+    float separationWeight = 0.4f;
 
     float wallAvoidanceWeight = 0.5f; 
 
     glm::vec3 alignForce = alignment(boids, perceptionRadius) * alignWeight;
     glm::vec3 cohesionForce = cohesion(boids, perceptionRadius) * cohesionWeight;
-    glm::vec3 separationForce = separation(boids, 1.0f) * separationWeight; // the allowed distance for boids to be in
+    glm::vec3 separationForce = separation(boids, 0.7f) * separationWeight; // the allowed distance for boids to be in
+    
+    alignForce.y *= 1.2f;       
+    cohesionForce.y *= 10.9f;   // fighting the fish columns !!!!!!!!!!
+    separationForce.y *= 1.4f; 
+
+    float horizontalBiasStrength = 0.1f; // Adjust this value to control the strength of the bias
+    glm::vec3 horizontalBiasForce = glm::vec3(0.0f, -velocity.y * horizontalBiasStrength, 0.0f);
 
     glm::vec4 wallNormalAndDistance = getBoundaryNormalAndDistance(position);
     glm::vec3 wallNormal = glm::vec3(wallNormalAndDistance);
@@ -63,7 +70,7 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::ve
     applyForce(alignForce);
     applyForce(cohesionForce);
     applyForce(separationForce); // jesli to sobie zakomentujcie to mozna zobaczyc ze hitboxy kinda dzialaja?
-
+    applyForce(horizontalBiasForce);
     
     // make the velocity a bit smooter - the fish wont snap so hard anymore :(
 
@@ -185,13 +192,13 @@ void  Boid::handleCollision(Boid& boid1, Boid& boid2) {
 }
 
 void Boid::handleCollisionWithColumn(Boid& boid, const Column& column) {
-    // Calculate the direction to the column
+    // calculate the dir to the column
     glm::vec3 dirToColumn = position - column.position;
     float distToColumn = glm::length(dirToColumn);
 
     // check if the boid is too close to the column along any axis
     if (distToColumn < glm::length(column.obb.halfExtents) * 1.1f) {
-        // relative position of the boid in the column's local space
+        // Relative position of the boid in the column's local space
         glm::vec3 localPos = position - column.position;
 
         // Project the boid's position onto the column's axes
@@ -200,7 +207,7 @@ void Boid::handleCollisionWithColumn(Boid& boid, const Column& column) {
             projection[i] = glm::dot(localPos, column.obb.axes[i]);
         }
 
-        // we must check for overlap in diff axes
+        // calculate overlap in each axis
         glm::vec3 overlap = glm::vec3(0.0f);
         for (int i = 0; i < 3; ++i) {
             if (std::abs(projection[i]) > column.obb.halfExtents[i]) {
@@ -208,25 +215,84 @@ void Boid::handleCollisionWithColumn(Boid& boid, const Column& column) {
             }
         }
 
-        // if there is overlap along any axis, push the boid away !
+        // If there is overlap along any axis, push the boid away
         if (glm::length(overlap) > 0.0f) {
-            glm::vec3 pushDirection = glm::normalize(dirToColumn); // Direction away from the column
-
-            if (std::abs(overlap.y) > 0.0f) {
-                // Prefer to push the boid around the column on the X-Z plane rather than up or down
-                glm::vec3 horizontalPushDirection = glm::normalize(glm::vec3(dirToColumn.x, 0.0f, dirToColumn.z)); // Ignore Y-axis
-                pushDirection = horizontalPushDirection;  // Redirect to X-Z plane
+            // Calculate the horizontal push direction (ignore Y-axis)
+            glm::vec3 horizontalPushDirection = glm::normalize(glm::vec3(dirToColumn.x, 0.0f, dirToColumn.z));
+            if (glm::length(horizontalPushDirection) < 0.01f) {
+                horizontalPushDirection = glm::vec3(1.0f, 0.0f, 0.0f); // Default to an arbitrary X direction
             }
 
-            // apply force to push the boid out along the axis with the most overlap
-            glm::vec3 pushForce = pushDirection * glm::length(overlap) * 1.1f;  
-            applyForce(pushForce);
+            glm::vec3 pushForce = horizontalPushDirection * glm::length(overlap) * 1.8f;
 
-            // change velocity to prevent fish from quickly re-entering the column
-            velocity = glm::normalize(velocity) * maxSpeed;
+            // Add a small upward force if the fish is too close to the floor
+            if (position.y < column.position.y - column.obb.halfExtents.y + 1.0f) {
+                pushForce.y = 3.0f;
+
+                // Apply the push force
+                applyForce(pushForce);
+
+                velocity = glm::normalize(velocity) * maxSpeed;
+            }
         }
     }
 }
+
+//void Boid::handleCollisionWithColumn(Boid& boid, const Column& column) {
+//    // Calculate the direction to the column
+//    glm::vec3 dirToColumn = position - column.position;
+//    float distToColumn = glm::length(dirToColumn);
+//
+//    // check if the boid is too close to the column along any axis
+//    if (distToColumn < glm::length(column.obb.halfExtents) * 1.1f) {
+//        // relative position of the boid in the column's local space
+//        glm::vec3 localPos = position - column.position;
+//
+//        // Project the boid's position onto the column's axes
+//        glm::vec3 projection;
+//        for (int i = 0; i < 3; ++i) {
+//            projection[i] = glm::dot(localPos, column.obb.axes[i]);
+//        }
+//
+//        // we must check for overlap in diff axes
+//        glm::vec3 overlap = glm::vec3(0.0f);
+//        for (int i = 0; i < 3; ++i) {
+//            if (std::abs(projection[i]) > column.obb.halfExtents[i]) {
+//                overlap[i] = (std::abs(projection[i]) - column.obb.halfExtents[i]);
+//            }
+//        }
+//
+//        // if there is overlap along any axis, push the boid away !
+//        if (glm::length(overlap) > 0.0f) {
+//            glm::vec3 pushDirection = glm::normalize(dirToColumn); // Direction away from the column
+//
+//            glm::vec3 horizontalPushDirection = glm::normalize(glm::vec3(dirToColumn.x, 0.0f, dirToColumn.z));
+//            if (glm::length(horizontalPushDirection) < 0.01f) {
+//                horizontalPushDirection = glm::vec3(1.0f, 0.0f, 0.0f); // Default to an arbitrary X direction
+//            }
+//
+//            glm::vec3 pushForce = horizontalPushDirection * glm::length(overlap) * 1.8f;
+//
+//            // Prevent boids from vibrating near the floor by ensuring they don’t get pushed downward
+//            if (position.y < column.position.y - column.obb.halfExtents.y + 1.0f) {
+//                pushForce.y = 3.0f; // Small upward push to prevent floor sticking
+//            }
+//
+//            //if (std::abs(overlap.y) > 0.0f) {
+//            //    // Prefer to push the boid around the column on the X-Z plane rather than up or down
+//            //    glm::vec3 horizontalPushDirection = glm::normalize(glm::vec3(dirToColumn.x, 0.0f, dirToColumn.z)); // Ignore Y-axis
+//            //    pushDirection = horizontalPushDirection;  // Redirect to X-Z plane
+//            //}
+//
+//            // apply force to push the boid out along the axis with the most overlap
+//            //glm::vec3 pushForce = pushDirection * glm::length(overlap) * 1.8f;  
+//            applyForce(pushForce);
+//
+//            // change velocity to prevent fish from quickly re-entering the column
+//            velocity = glm::normalize(velocity) * maxSpeed;
+//        }
+//    }
+//}
 
 glm::vec3 Boid::alignment(const std::vector<Boid>& boids, float neighborDist) {
     glm::vec3 steering(0.0f);
