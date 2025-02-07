@@ -13,9 +13,26 @@
 #include "Boids.h"
 #include "Box.h"
 #include <stb_image.h>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
-const unsigned int width = 800;
-const unsigned int height = 800;
+const float panelWidth = 300.0f;
+
+const unsigned int renderingWidth = 800;
+const unsigned int renderingHeight = 800;
+const unsigned int windowWidth = renderingWidth + panelWidth;
+const unsigned int windowHeight = renderingHeight;
+
+static int numGroups = 3;
+static int numBoidsPerGroup = 70;
+static float maxSpeed = 0.02f;
+static int useNormalMapping = 1;
+
+static bool mouseLeftClicked = false;
+static bool mouseRightClicked = false;
+static glm::vec2 mouseClickPosition;
+static bool isAttractionMode = true;
 
 Core::RenderContext fishContext;
 GLuint fishNormalMap, fishTexture;
@@ -56,7 +73,7 @@ GLuint loadTexture(const std::string& path) {
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    // Load the texture data using stb_image
+    // load the texture data using stb_image
     int width, height, nrChannels;
     unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
     if (data) {
@@ -79,7 +96,7 @@ GLuint loadTexture(const std::string& path) {
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        // Set texture parameters
+        // set texture parameters
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -94,6 +111,75 @@ GLuint loadTexture(const std::string& path) {
     stbi_image_free(data);
     return textureID;
 }
+/*
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+    if (ImGui::GetIO().WantCaptureMouse) return;
+
+    double x, y;
+    glfwGetCursorPos(window, &x, &y);
+    mouseClickPosition = glm::vec2(x, renderingHeight - y);
+
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        mouseLeftClicked = true;
+    }
+    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+        mouseRightClicked = true;
+    }
+}
+
+void applyMouseForce(std::vector<Boid>& boids, const glm::vec3& target, float forceStrength, bool isAttraction) {
+    for (auto& boid : boids) {
+        glm::vec3 direction = target - boid.position;
+        float distance = glm::length(direction);
+
+        if (distance > 0.0f) {
+            direction = glm::normalize(direction);
+            glm::vec3 force = direction * forceStrength;
+
+            if (!isAttraction) {
+                force = -force;
+            }
+
+            boid.applyForce(force);
+        }
+    }
+}
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+        isAttractionMode = true;
+    }
+    else if (key == GLFW_KEY_R && action == GLFW_PRESS) {
+        isAttractionMode = false;
+    }
+}
+
+glm::vec3 getWorldPositionFromMouse(float mouseX, float mouseY, Camera& camera, int screenWidth, int screenHeight) {
+    // convert screen coordinates to normalized device coordinates
+    float x = (2.0f * mouseX) / screenWidth - 1.0f;
+    float y = 1.0f - (2.0f * mouseY) / screenHeight;
+    float z = 1.0f;
+
+    // create a ray in clip space
+    glm::vec4 rayClip = glm::vec4(x, y, -1.0f, -1.0f);
+
+    // transform the ray to eye space
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
+    glm::vec4 rayEye = glm::inverse(projection) * rayClip;
+    rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
+
+    // transform the ray to world space
+    glm::mat4 view = camera.GetViewMatrix();
+    glm::vec4 rayWorld = glm::inverse(view) * rayEye;
+    glm::vec3 rayDirection = glm::normalize(glm::vec3(rayWorld));
+
+    // calculate the intersection point with the z = 0 plane 
+    float t = -camera.Position.z / rayDirection.z;
+    glm::vec3 worldPosition = camera.Position + t * rayDirection;
+
+    return worldPosition;
+}
+*/
 
 int main() {
     glfwInit();
@@ -101,7 +187,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(width, height, "mywindow", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "Aquarium", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -114,7 +200,22 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    glViewport(0, 0, width, height);
+    glViewport(panelWidth, 0, renderingWidth, renderingHeight);
+
+    // imgui initialization
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui::StyleColorsDark();
+
+    // connect imgui with GLFW and OpenGL3
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+    
+    /*
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);
+    glfwSetKeyCallback(window, keyCallback);
+    */
 
     glEnable(GL_DEPTH_TEST);
 
@@ -142,24 +243,23 @@ int main() {
     boxEBO.Unbind();
     shaderProgram.Activate();
 
+    //shader for fish
     Shader fishShader("../shaders/fish_shader.vert", "../shaders/fish_shader.frag");
     fishShader.Activate();
-
-    //set up a pyramid shaped vao, so it represents our boids
-    //setupPyramid();
 
     // matrixes for the camera
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -30.0f)); // sets how far away we are from the cube
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+    float aspectRatio = (float)renderingWidth / (float)renderingHeight;
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
-    Camera camera(width, height, glm::vec3(0.0f, 0.0f, 10.0f));
-    
+    Camera camera(renderingWidth, renderingHeight, glm::vec3(0.0f, 0.0f, 10.0f));
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!
     std::vector<Boid> boids;
     loadModelToContext("../resources/models/fish.obj", fishContext);
-    setUpBoids(boids, 3, 70); // set up num of boid groups you want here : boids, num of groups, num of boids in each group
+    setUpBoids(boids, numGroups, numBoidsPerGroup); // set up num of boid groups you want here : boids, num of groups, num of boids in each group
     for (auto& boid : boids) {
         boid.context = &fishContext;
     }
@@ -171,34 +271,110 @@ int main() {
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::SetNextWindowPos(ImVec2(0, 0)); 
+        ImGui::SetNextWindowSize(ImVec2(panelWidth, renderingHeight));
+
+        // panel for interactive elements
+        ImGui::Begin("User controls panel", nullptr, ImGuiWindowFlags_NoResize);
+
+        ImGui::Text("Boid groups parameters");
+        ImGui::Spacing();
+
+        // slider for number of boid groups
+        ImGui::Text("Number of Groups");
+        ImGui::SliderInt("##slider1", &numGroups, 1, 10);
+
+        // slider for number of boids per group
+        ImGui::Text("Boids per Group");
+        ImGui::SliderInt("##slider2", &numBoidsPerGroup, 1, 100);
+
+        ImGui::Spacing();
+
+        // button to reinitialize boids
+        if (ImGui::Button("Apply Changes")) {
+            boids.clear();
+            setUpBoids(boids, numGroups, numBoidsPerGroup);
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        ImGui::Text("Boid parameters");
+        ImGui::Spacing();
+
+        // slider for boid speed
+        ImGui::Text("Boids' speed");
+        if (ImGui::SliderFloat("##slider3", &maxSpeed, 0.01f, 0.1f)) {
+            // update maxSpeed for all boids in real-time
+            for (auto& boid : boids) {
+                boid.maxSpeed = maxSpeed;
+            }
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        ImGui::Text("Mappings' parameters");
+        ImGui::Spacing();
+        if (ImGui::Checkbox("Enable Normal Mapping", (bool*)&useNormalMapping)) {
+            // Update the uniform in the shader
+            fishShader.Activate();
+            fishShader.SetInt("useNormalMapping", useNormalMapping);
+        }
+
+        ImGui::End();
+
         //allows for camera movement
-        processInput(window);
-        camera.Inputs(window);
+        if (!ImGui::GetIO().WantCaptureMouse) {
+            // only process camera inputs if ImGui is not using the mouse
+            processInput(window);
+            camera.Inputs(window);
+        }
+
         camera.updateMatrix(45.0f, 0.1f, 100.0f);
 
-        bool shaderReloaded = false;
+        //bool shaderReloaded = false;
+        /*
+        // handle mouse clicks
+        if ((mouseLeftClicked || mouseRightClicked) && !ImGui::GetIO().WantCaptureMouse) {
+            glm::vec3 worldPosition = getWorldPositionFromMouse(mouseClickPosition.x, mouseClickPosition.y, camera, renderingWidth, renderingHeight);
 
-        // set camera position for both shaders
+            // apply force based on the mode
+            float forceStrength = 0.1f;
+            applyMouseForce(boids, worldPosition, forceStrength, isAttractionMode);
+
+            // reset mouse click state
+            mouseLeftClicked = false;
+            mouseRightClicked = false;
+        }
+        */
+
         shaderProgram.Activate();
         shaderProgram.SetVec3("cameraPos", camera.Position);
 
-        camera.Inputs(window);
-        camera.updateMatrix(45.0f, 0.1f, 100.0f);
+        //camera.Inputs(window);
+        //camera.updateMatrix(45.0f, 0.1f, 100.0f);
 
         fishShader.Activate();
 
+        // binding textures
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, fishNormalMap);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, fishTexture);
 
-
         camera.Matrix(fishShader, "camMatrix");
-
 
         // set uniforms for fish shader
         fishShader.SetInt("fishNormalMap", 0);
         fishShader.SetInt("fishTexture", 1);
+        fishShader.SetInt("useNormalMapping", useNormalMapping);
 
         fishShader.SetMat4("view", view);
         fishShader.SetMat4("modelMatrix", model);
@@ -222,10 +398,10 @@ int main() {
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
         
         boxVAO.Bind();
-        //draws wire cube for the boids to fly in
+
+        // draws wire cube for the boids to fly in
         glUniform3fv(glGetUniformLocation(shaderProgram.ID, "color"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
-        glDrawElements(GL_LINES, sizeof(boxIndices)/ sizeof(int), GL_UNSIGNED_INT, 0);
-        
+        glDrawElements(GL_LINES, sizeof(boxIndices)/ sizeof(int), GL_UNSIGNED_INT, 0); 
         
         // boid rendering and updating
         for (auto& boid : boids) {       
@@ -233,11 +409,16 @@ int main() {
         }
         renderBoids(boids, fishShader);
 
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
-        glfwPollEvents();
+        glfwPollEvents(); 
     }
 
     glfwDestroyWindow(window);
     glfwTerminate();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
     return 0;
 }

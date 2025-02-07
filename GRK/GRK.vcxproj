@@ -43,6 +43,12 @@
     <ClCompile Include="..\src\BoidSetUp.cpp" />
     <ClCompile Include="..\src\Camera.cpp" />
     <ClCompile Include="..\src\EBO.cpp" />
+    <ClCompile Include="..\src\imgui.cpp" />
+    <ClCompile Include="..\src\imgui_draw.cpp" />
+    <ClCompile Include="..\src\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\src\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\src\imgui_tables.cpp" />
+    <ClCompile Include="..\src\imgui_widgets.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Render_Utils.cpp" />
     <ClCompile Include="..\src\ShaderClass.cpp" />
@@ -140,7 +146,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\include;..\include\glad</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\include\glad;..\include\imgui</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -148,6 +154,9 @@
       <AdditionalLibraryDirectories>..\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>assimp-vc143-mt.lib;glfw3.lib;freeglutd.lib;glew32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y /D "$(ProjectDir)..\dll\*.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
