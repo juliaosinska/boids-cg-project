@@ -11,8 +11,18 @@ Boid::Boid(glm::vec3 startPosition, glm::vec3 startVelocity, int groupID, glm::v
     angle(0.0f),
     perceptionRadius(2.5f),
     groupID(groupID),
-    color(color)
-{}
+    color(color),
+    hasCollided(false)
+{
+    obb.center = position;
+
+    obb.axes[0] = glm::vec3(1.0f, 0.0f, 0.0f); // X-axis
+    obb.axes[1] = glm::vec3(0.0f, 1.0f, 0.0f); // Y-axis
+    obb.axes[2] = glm::vec3(0.0f, 0.0f, 1.0f); // Z-axix
+
+    obb.halfExtents = glm::vec3(0.65f, 0.08f, 0.05f); // this is the size of our fish hitbox
+    //could add something dynamic here mayhaps?
+}
 
 void Boid::update(const std::vector<Boid>& boids) {
     // define cube boundaries - if we want a bigger aquarium, gotta change it here
@@ -51,7 +61,8 @@ void Boid::update(const std::vector<Boid>& boids) {
 
     applyForce(alignForce);
     applyForce(cohesionForce);
-    applyForce(separationForce);
+    applyForce(separationForce); // jesli to sobie zakomentujcie to mozna zobaczyc ze hitboxy kinda dzialaja?
+
     
     // make the velocity a bit smooter - the fish wont snap so hard anymore :(
 
@@ -141,6 +152,34 @@ glm::vec4 Boid::getBoundaryNormalAndDistance(glm::vec3& pos) {
 
 void Boid::applyForce(glm::vec3 force) {
     acceleration += force;
+}
+
+void  Boid::handleCollision(Boid& boid1, Boid& boid2) {
+    // Find the vector between the two boids
+    glm::vec3 collisionNormal = glm::normalize(boid1.position - boid2.position);
+
+    if (glm::length(collisionNormal) < 1e-6f) {
+        std::cout << "bad!";
+        return;
+    }
+    glm::vec3 relativeVelocity = boid1.velocity - boid2.velocity;
+    float velocityAlongNormal = glm::dot(relativeVelocity, collisionNormal);
+
+    if(velocityAlongNormal > 0) return; // this means the boids are already moving apart, so everything good
+
+    float e = 0.5f; // Elasticity (bounce factor). 1 is a perfect bounce, less than 1 is inelastic.
+    float j = -(1 + e) * velocityAlongNormal;
+
+    // Apply the impulse to each boid (basic response without mass for simplicity)
+    glm::vec3 impulse = j * collisionNormal;
+
+    boid1.velocity += impulse;
+
+    // Apply the opposite impulse to boid2 (push it away from boid1)
+   boid2.velocity -= impulse;
+
+    boid1.hasCollided = true;
+    boid2.hasCollided = true;
 }
 
 glm::vec3 Boid::alignment(const std::vector<Boid>& boids, float neighborDist) {

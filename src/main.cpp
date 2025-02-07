@@ -17,6 +17,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "obb.h"
 
 const float panelWidth = 300.0f;
 
@@ -137,14 +138,14 @@ void loadModelToContext(std::string path, Core::RenderContext& context)
     std::cout << "Model loaded successfully with " << scene->mMeshes[0]->mNumVertices << " vertices" << std::endl;
 
     KDOP14 kdop;
-    aiMesh* mesh = scene->mMeshes[0]; // this is our fish mesh i suppose?
-    kdop.computeFromMesh(mesh);
+    //aiMesh* mesh = scene->mMeshes[0]; // this is our fish mesh i suppose?
+    //kdop.computeFromMesh(mesh);
 
-    for (const auto& plane : kdop.planes) {
+    /*for (const auto& plane : kdop.planes) {
         std::cout << "Plane normal: (" << plane.normal.x << ", " << plane.normal.y << ", " << plane.normal.z << ") ";
         std::cout << "d: " << plane.d << std::endl;
     }
-    kdop.render();
+    kdop.render();*/
 }
 
 GLuint loadTexture(const std::string& path) {
@@ -478,15 +479,35 @@ int main() {
         
         boxVAO.Bind();
 
+        ///////////////// boid rendering /////////////////
+
         // draws wire cube for the boids to fly in
         glUniform3fv(glGetUniformLocation(shaderProgram.ID, "color"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
         glDrawElements(GL_LINES, sizeof(boxIndices)/ sizeof(int), GL_UNSIGNED_INT, 0); 
         
+        for (auto& boid : boids) {
+            boid.hasCollided = false; // reset collision state at the start of the frame
+        }
+
         // boid rendering and updating
         for (auto& boid : boids) {       
-            boid.update(boids);          
+            for (auto& otherBoid : boids) {
+                if (&boid != &otherBoid && boid.groupID == otherBoid.groupID && !boid.hasCollided && !otherBoid.hasCollided) {
+                    if (checkOBBCollision(boid.obb, otherBoid.obb)) {
+                        boid.handleCollision(boid, otherBoid);
+                    }
+                }  
+            }
         }
+
+        for (auto& boid : boids) {
+            boid.update(boids);
+        }
+
         renderBoids(boids, fishShader);
+        //renderOBB; //doesnt work
+
+        //////////////////////////////////////////////////
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

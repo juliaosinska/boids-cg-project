@@ -4,6 +4,7 @@
 #include <glm.hpp>
 #include <vector>
 #include "Render_Utils.h"
+#include "obb.h"
 
 // this file just contains the blueprint for the boids class
 class Boid {
@@ -12,6 +13,7 @@ public:
     glm::vec3 position;
     glm::vec3 velocity;
     glm::vec3 acceleration;
+    OBB obb; // each boid has their own obb instance stored inside
 
     glm::vec3 color;
 
@@ -23,6 +25,8 @@ public:
     float perceptionRadius;
 
     int groupID;
+
+    bool hasCollided = false;
 
     Core::RenderContext* context;
 
@@ -40,6 +44,9 @@ public:
 
     glm::vec2 getFishYawAndPitch();
     glm::vec3 getFishVelocity();
+
+    glm::vec3 getBoidPosition(const std::vector<Boid>& boids);
+    void handleCollision(Boid& boid1, Boid& boid2);
 
     // flocking behaviors
     glm::vec3 separation(const std::vector<Boid>& boids, float desiredSeparation);

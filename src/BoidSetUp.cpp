@@ -6,6 +6,7 @@
 #include "boidSetUp.h"
 #include "boids.h" 
 #include "Render_Utils.h"
+#include "obb.h"
 
 
 // Pyramid vertices
@@ -80,7 +81,11 @@ void renderBoids(std::vector<Boid>& boids, Shader& shaderProgram) {
         model = glm::translate(model, boid.position);
         model *= rotation; // makes our fish more bendy and natural !
         model = glm::scale(model, glm::vec3(0.1f));
+
+        //update the obb of each boid
+        updateOBB(model, glm::vec3(0.0f), boid.obb.axes, boid.obb);
         
+
         shaderProgram.Activate();
         shaderProgram.SetMat4("modelMatrix", model);
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
@@ -128,6 +133,16 @@ void setUpBoids(std::vector<Boid>& boids, int numGroups, int numBoidsPerGroup) {
                 static_cast<float>(rand() % 10 - 5) / 10.0f,
                 static_cast<float>(rand() % 10 - 5) / 10.0f
             );
+
+            //OBB obb;
+            //obb.center = startPosition;
+
+            //// local axes before rotation (aligned with world axes) - we will rotate them with our boids
+            //obb.axes[0] = glm::vec3(1.0f, 0.0f, 0.0f);
+            //obb.axes[1] = glm::vec3(0.0f, 1.0f, 0.0f);
+            //obb.axes[2] = glm::vec3(0.0f, 0.0f, 1.0f);
+
+            //obbs.push_back(obb);
 
             // Add the boid to the list
             glm::vec3 groupColor = groupColors[group]; 

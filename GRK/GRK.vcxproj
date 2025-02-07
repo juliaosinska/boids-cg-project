@@ -30,6 +30,7 @@
     <ClInclude Include="..\src\Box.h" />
     <ClInclude Include="..\src\Camera.h" />
     <ClInclude Include="..\src\EBO.h" />
+    <ClInclude Include="..\src\obb.h" />
     <ClInclude Include="..\src\objload.h" />
     <ClInclude Include="..\src\Render_Utils.h" />
     <ClInclude Include="..\src\ShaderClass.h" />
@@ -50,6 +51,7 @@
     <ClCompile Include="..\src\imgui_tables.cpp" />
     <ClCompile Include="..\src\imgui_widgets.cpp" />
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\obb.cpp" />
     <ClCompile Include="..\src\Render_Utils.cpp" />
     <ClCompile Include="..\src\ShaderClass.cpp" />
     <ClCompile Include="..\src\stb_image.cpp" />
