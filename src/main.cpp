@@ -19,6 +19,7 @@
 #include "imgui_impl_opengl3.h"
 #include "obb.h"
 #include <chrono>
+#include <thread>
 
 const float panelWidth = 300.0f;
 
@@ -349,12 +350,33 @@ int main() {
 
     //caluculate delta time to regulate speed with the frame rate
     auto lastTime = std::chrono::high_resolution_clock::now();
+    float deltaTime = 0.0f;
+    int frameCount = 0;
+    double fpsTimer = 0.0;
+
+    //change here if your pc can make it
+    const int targetFPS = 60;
+    const float targetFrameTime = 1.0f / targetFPS;
 
     while (!glfwWindowShouldClose(window)) {
         auto currentTime = std::chrono::high_resolution_clock::now();
-        float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+        deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
         lastTime = currentTime;
 
+        if (deltaTime < targetFrameTime) {
+            float sleepTime = targetFrameTime - deltaTime;
+            std::this_thread::sleep_for(std::chrono::duration<float>(sleepTime));
+            deltaTime = targetFrameTime; // Prevent too small delta times
+        }
+
+        // FPS Calculation - uncomment to see fps each sec
+        //frameCount++;
+        //fpsTimer += deltaTime;
+        //if (fpsTimer >= 1.0f) { // Every second, print FPS
+        //    std::cout << "FPS: " << frameCount << std::endl;
+        //    frameCount = 0;
+        //    fpsTimer = 0.0f;
+        //}
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         processInput(window);
@@ -523,7 +545,12 @@ int main() {
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
-        glfwPollEvents(); 
+        glfwPollEvents();
+
+        //auto currentTime = std::chrono::high_resolution_clock::now();
+       // deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+        lastTime = currentTime;
+        
     }
 
     glfwDestroyWindow(window);

@@ -76,7 +76,7 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime) {
         velocity = glm::normalize(velocity) * maxSpeed;
     }
     
-    position += velocity;
+    position += velocity ;
     
     //if a fish manages to go through our wall avoidence, this will stop them from popping out of the box
     if (position.x < cubeMin) position.x = cubeMin + boundaryThreshold;
