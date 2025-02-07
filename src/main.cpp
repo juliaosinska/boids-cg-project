@@ -13,9 +13,13 @@
 #include "Boids.h"
 #include "Box.h"
 #include <stb_image.h>
+#include "kdop.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "obb.h"
+#include <chrono>
+#include <thread>
 
 const float panelWidth = 300.0f;
 
@@ -37,6 +41,73 @@ GLuint fishNormalMap, fishTexture;
 glm::vec3 lightPos = glm::vec3(10.0f, 10.0f, 10.0f);
 glm::vec3 lightColor = glm::vec3(300.0f, 300.0f, 300.0f);
 glm::vec3 objectColor = glm::vec3(0.8f, 0.3f, 0.3f);
+
+
+GLfloat columnVertices[216];  // Size is 36 segments * 6 values per segment (2 triangles per segment)
+GLuint columnVBO, columnVAO;
+
+void generateColumn() {
+    int numSegments = 36; // Number of segments in the cylinder base
+    float radius = 1.0f;
+    float height = 2.0f;
+
+    // Populate the static array with vertex data
+    for (int i = 0; i < numSegments; ++i) {
+        float angle = 2.0f * glm::pi<float>() * i / numSegments;
+        float x = radius * cos(angle);
+        float z = radius * sin(angle);
+
+        // Bottom and Top vertices (each segment has 2 triangles, 6 values)
+        columnVertices[i * 6 + 0] = x;   // Vertex x (bottom)
+        columnVertices[i * 6 + 1] = 0.0f; // Vertex y (bottom)
+        columnVertices[i * 6 + 2] = z;   // Vertex z (bottom)
+
+        columnVertices[i * 6 + 3] = x;   // Vertex x (top)
+        columnVertices[i * 6 + 4] = height; // Vertex y (top)
+        columnVertices[i * 6 + 5] = z;   // Vertex z (top)
+    }
+
+    // Generate and bind VBO (Vertex Buffer Object)
+    glGenBuffers(1, &columnVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, columnVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(columnVertices), columnVertices, GL_STATIC_DRAW);
+
+    // Generate and bind VAO (Vertex Array Object)
+    glGenVertexArrays(1, &columnVAO);
+    glBindVertexArray(columnVAO);
+
+    // Link VBO with the vertex attributes
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0); // Position
+    glEnableVertexAttribArray(0); // Enable vertex attribute at index 0
+
+    // Unbind VAO and VBO (to avoid accidental changes)
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void renderColumn(Shader& shaderProgram, Camera camera) {
+    shaderProgram.Activate();
+    glUniform3f(glGetUniformLocation(shaderProgram.ID, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+    shaderProgram.Activate();
+    camera.Matrix(shaderProgram, "camMatrix");
+
+    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -30.0f));
+    GLuint modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
+    GLuint viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
+
+
+    glm::mat4 columnModel = glm::mat4(1.0f);
+    columnModel = glm::translate(columnModel, glm::vec3(1, 0.0f, 1));
+    columnModel = glm::scale(columnModel, glm::vec3(2.2f, 2.0f, 2.2f));
+   
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(columnModel));
+
+    // Use the VAO to render the object
+    glBindVertexArray(columnVAO);
+    glDrawArrays(GL_LINES, 0, 36 * 2); // Render 36 segments (2 vertices per segment)
+    glBindVertexArray(0);
+}
 
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -62,7 +133,15 @@ void loadModelToContext(std::string path, Core::RenderContext& context)
     context.initFromAssimpMesh(scene->mMeshes[0]);
     std::cout << "Model loaded successfully with " << scene->mMeshes[0]->mNumVertices << " vertices" << std::endl;
 
+    KDOP14 kdop;
+    //aiMesh* mesh = scene->mMeshes[0]; // this is our fish mesh i suppose?
+    //kdop.computeFromMesh(mesh);
 
+    /*for (const auto& plane : kdop.planes) {
+        std::cout << "Plane normal: (" << plane.normal.x << ", " << plane.normal.y << ", " << plane.normal.z << ") ";
+        std::cout << "d: " << plane.d << std::endl;
+    }
+    kdop.render();*/
 }
 
 GLuint loadTexture(const std::string& path) {
@@ -191,6 +270,8 @@ int main() {
     }
     glViewport(0, 0, windowWidth, windowHeight);
 
+    
+
     // imgui initialization
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -250,7 +331,36 @@ int main() {
         boid.context = &fishContext;
     }
 
+    //caluculate delta time to regulate speed with the frame rate
+    auto lastTime = std::chrono::high_resolution_clock::now();
+    float deltaTime = 0.0f;
+    int frameCount = 0;
+    double fpsTimer = 0.0;
+
+    //change here if your pc can make it
+    const int targetFPS = 60;
+    const float targetFrameTime = 1.0f / targetFPS;
+
     while (!glfwWindowShouldClose(window)) {
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+        lastTime = currentTime;
+
+        if (deltaTime < targetFrameTime) {
+            float sleepTime = targetFrameTime - deltaTime;
+            std::this_thread::sleep_for(std::chrono::duration<float>(sleepTime));
+            deltaTime = targetFrameTime; // Prevent too small delta times
+        }
+
+        // FPS Calculation - uncomment to see fps each sec
+        //frameCount++;
+        //fpsTimer += deltaTime;
+        //if (fpsTimer >= 1.0f) { // Every second, print FPS
+        //    std::cout << "FPS: " << frameCount << std::endl;
+        //    frameCount = 0;
+        //    fpsTimer = 0.0f;
+        //}
+
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         processInput(window);
 
@@ -384,20 +494,45 @@ int main() {
 
         boxVAO.Bind();
 
+        ///////////////// boid rendering /////////////////
+
         // draws wire cube for the boids to fly in
         glUniform3fv(glGetUniformLocation(shaderProgram.ID, "color"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
-        glDrawElements(GL_LINES, sizeof(boxIndices) / sizeof(int), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_LINES, sizeof(boxIndices)/ sizeof(int), GL_UNSIGNED_INT, 0); 
+        
+        for (auto& boid : boids) {
+            boid.hasCollided = false; // reset collision state at the start of the frame
+        }
 
         // boid rendering and updating
-        for (auto& boid : boids) {
-            boid.update(boids);
+        for (auto& boid : boids) {       
+            for (auto& otherBoid : boids) {
+                if (&boid != &otherBoid && boid.groupID == otherBoid.groupID && !boid.hasCollided && !otherBoid.hasCollided) {
+                    if (checkOBBCollision(boid.obb, otherBoid.obb)) {
+                        boid.handleCollision(boid, otherBoid);
+                    }
+                }  
+            }
         }
+
+        for (auto& boid : boids) {
+            boid.update(boids, deltaTime);
+        }
+
         renderBoids(boids, fishShader);
+        //renderOBB; //doesnt work
+
+        //////////////////////////////////////////////////
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        //auto currentTime = std::chrono::high_resolution_clock::now();
+       // deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+        lastTime = currentTime;
+        
     }
 
     glfwDestroyWindow(window);
