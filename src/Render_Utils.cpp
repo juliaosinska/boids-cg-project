@@ -122,6 +122,12 @@ void Core::RenderContext::initFromAssimpMesh(aiMesh* mesh) {
 
 
     std::cout << "Mesh loaded successfully with " << mesh->mNumVertices << " vertices and " << indexCount << " indices.\n";
+    /*for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        std::cout << "Vertex " << i << ": ("
+            << mesh->mVertices[i].x << ", "
+            << mesh->mVertices[i].y << ", "
+            << mesh->mVertices[i].z << ")\n";
+    }*/
 }
 
 
