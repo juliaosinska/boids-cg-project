@@ -19,20 +19,17 @@
 
 const float panelWidth = 300.0f;
 
-const unsigned int renderingWidth = 800;
-const unsigned int renderingHeight = 800;
-const unsigned int windowWidth = renderingWidth + panelWidth;
-const unsigned int windowHeight = renderingHeight;
+const unsigned int windowWidth = 800 + panelWidth;
+const unsigned int windowHeight = 800;
 
 static int numGroups = 3;
 static int numBoidsPerGroup = 70;
 static float maxSpeed = 0.02f;
 static int useNormalMapping = 1;
 
-static bool mouseLeftClicked = false;
 static bool mouseRightClicked = false;
 static glm::vec2 mouseClickPosition;
-static bool isAttractionMode = true;
+static bool isAttractionMode = false;
 
 Core::RenderContext fishContext;
 GLuint fishNormalMap, fishTexture;
@@ -111,19 +108,21 @@ GLuint loadTexture(const std::string& path) {
     stbi_image_free(data);
     return textureID;
 }
-/*
-void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
-    if (ImGui::GetIO().WantCaptureMouse) return;
 
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+    // forward mouse button events to imgui
+    if (ImGui::GetIO().WantCaptureMouse) {
+        ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+        return;
+    }
+
+    // handle attraction/disperse
     double x, y;
     glfwGetCursorPos(window, &x, &y);
-    mouseClickPosition = glm::vec2(x, renderingHeight - y);
+    mouseClickPosition = glm::vec2(x, windowHeight - y);
 
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        mouseLeftClicked = true;
-    }
-    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-        mouseRightClicked = true;
+    if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+        mouseRightClicked = (action == GLFW_PRESS || action == GLFW_REPEAT);
     }
 }
 
@@ -142,15 +141,6 @@ void applyMouseForce(std::vector<Boid>& boids, const glm::vec3& target, float fo
 
             boid.applyForce(force);
         }
-    }
-}
-
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_A && action == GLFW_PRESS) {
-        isAttractionMode = true;
-    }
-    else if (key == GLFW_KEY_R && action == GLFW_PRESS) {
-        isAttractionMode = false;
     }
 }
 
@@ -179,7 +169,6 @@ glm::vec3 getWorldPositionFromMouse(float mouseX, float mouseY, Camera& camera, 
 
     return worldPosition;
 }
-*/
 
 int main() {
     glfwInit();
@@ -193,14 +182,14 @@ int main() {
         glfwTerminate();
         return -1;
     }
-    
+
     glfwMakeContextCurrent(window);
-    
+
     if (!gladLoadGL()) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    glViewport(panelWidth, 0, renderingWidth, renderingHeight);
+    glViewport(0, 0, windowWidth, windowHeight);
 
     // imgui initialization
     IMGUI_CHECKVERSION();
@@ -211,11 +200,8 @@ int main() {
     // connect imgui with GLFW and OpenGL3
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
-    
-    /*
+
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
-    glfwSetKeyCallback(window, keyCallback);
-    */
 
     glEnable(GL_DEPTH_TEST);
 
@@ -250,11 +236,11 @@ int main() {
     // matrixes for the camera
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -30.0f)); // sets how far away we are from the cube
-    float aspectRatio = (float)renderingWidth / (float)renderingHeight;
+    float aspectRatio = (float)windowWidth / (float)windowHeight;
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
-    Camera camera(renderingWidth, renderingHeight, glm::vec3(0.0f, 0.0f, 10.0f));
+    Camera camera(windowWidth, windowHeight, glm::vec3(-5.0f, 0.0f, 10.0f));
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!
     std::vector<Boid> boids;
@@ -275,8 +261,8 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::SetNextWindowPos(ImVec2(0, 0)); 
-        ImGui::SetNextWindowSize(ImVec2(panelWidth, renderingHeight));
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowSize(ImVec2(panelWidth, windowHeight));
 
         // panel for interactive elements
         ImGui::Begin("User controls panel", nullptr, ImGuiWindowFlags_NoResize);
@@ -320,17 +306,25 @@ int main() {
         ImGui::Separator();
         ImGui::Spacing();
 
+        // toggle for attraction/dispersion mode
+        ImGui::Text("Interaction Mode");
+        if (ImGui::Checkbox("Attraction Mode", &isAttractionMode)) {
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
         ImGui::Text("Mappings' parameters");
         ImGui::Spacing();
         if (ImGui::Checkbox("Enable Normal Mapping", (bool*)&useNormalMapping)) {
-            // Update the uniform in the shader
             fishShader.Activate();
             fishShader.SetInt("useNormalMapping", useNormalMapping);
         }
 
         ImGui::End();
 
-        //allows for camera movement
+        // allows for camera movement
         if (!ImGui::GetIO().WantCaptureMouse) {
             // only process camera inputs if ImGui is not using the mouse
             processInput(window);
@@ -339,27 +333,18 @@ int main() {
 
         camera.updateMatrix(45.0f, 0.1f, 100.0f);
 
-        //bool shaderReloaded = false;
-        /*
+
         // handle mouse clicks
-        if ((mouseLeftClicked || mouseRightClicked) && !ImGui::GetIO().WantCaptureMouse) {
-            glm::vec3 worldPosition = getWorldPositionFromMouse(mouseClickPosition.x, mouseClickPosition.y, camera, renderingWidth, renderingHeight);
+        if (mouseRightClicked && !ImGui::GetIO().WantCaptureMouse) {
+            glm::vec3 worldPosition = getWorldPositionFromMouse(mouseClickPosition.x, mouseClickPosition.y, camera, windowWidth, windowHeight);
 
-            // apply force based on the mode
-            float forceStrength = 0.1f;
+            // apply force continuously while the right mouse button is held
+            float forceStrength = 0.01f;
             applyMouseForce(boids, worldPosition, forceStrength, isAttractionMode);
-
-            // reset mouse click state
-            mouseLeftClicked = false;
-            mouseRightClicked = false;
         }
-        */
 
         shaderProgram.Activate();
         shaderProgram.SetVec3("cameraPos", camera.Position);
-
-        //camera.Inputs(window);
-        //camera.updateMatrix(45.0f, 0.1f, 100.0f);
 
         fishShader.Activate();
 
@@ -382,7 +367,7 @@ int main() {
         fishShader.SetVec3("lightColor", lightColor);
         fishShader.SetVec3("cameraPos", camera.Position);
         fishShader.SetVec3("objectColor", objectColor);
-        
+
         // program shader
         glUniform3f(glGetUniformLocation(shaderProgram.ID, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
         shaderProgram.Activate();
@@ -392,27 +377,27 @@ int main() {
         GLuint viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
 
         glm::mat4 identityMatrix = glm::mat4(1.0f);
-        model = glm::scale(identityMatrix, glm::vec3(100.0f, 100.0f, 100.0f));
+        model = glm::scale(identityMatrix, glm::vec3(100.5f, 100.0f, 100.0f));
 
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-        
+
         boxVAO.Bind();
 
         // draws wire cube for the boids to fly in
         glUniform3fv(glGetUniformLocation(shaderProgram.ID, "color"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
-        glDrawElements(GL_LINES, sizeof(boxIndices)/ sizeof(int), GL_UNSIGNED_INT, 0); 
-        
+        glDrawElements(GL_LINES, sizeof(boxIndices) / sizeof(int), GL_UNSIGNED_INT, 0);
+
         // boid rendering and updating
-        for (auto& boid : boids) {       
-            boid.update(boids);          
+        for (auto& boid : boids) {
+            boid.update(boids);
         }
         renderBoids(boids, fishShader);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
-        glfwPollEvents(); 
+        glfwPollEvents();
     }
 
     glfwDestroyWindow(window);
