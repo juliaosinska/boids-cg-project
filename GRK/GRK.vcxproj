@@ -30,6 +30,7 @@
     <ClInclude Include="..\src\Box.h" />
     <ClInclude Include="..\src\Camera.h" />
     <ClInclude Include="..\src\EBO.h" />
+    <ClInclude Include="..\src\kdop.h" />
     <ClInclude Include="..\src\objload.h" />
     <ClInclude Include="..\src\Render_Utils.h" />
     <ClInclude Include="..\src\ShaderClass.h" />
@@ -43,6 +44,7 @@
     <ClCompile Include="..\src\BoidSetUp.cpp" />
     <ClCompile Include="..\src\Camera.cpp" />
     <ClCompile Include="..\src\EBO.cpp" />
+    <ClCompile Include="..\src\kdop14.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Render_Utils.cpp" />
     <ClCompile Include="..\src\ShaderClass.cpp" />
