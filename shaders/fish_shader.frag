@@ -13,6 +13,7 @@ uniform vec3 objectColor;
 
 uniform sampler2D fishNormalMap;
 uniform sampler2D fishTexture;
+uniform int useNormalMapping;
 
 out vec4 out_color;
 
@@ -24,8 +25,13 @@ void main()
     vec4 textureColor = texture(fishTexture, fragTexCoord);
 
     // normal mapping
-    vec3 normalMapValue = texture(fishNormalMap, fragTexCoord).rgb;
-    vec3 N = normalize(TBN * (2.0 * normalMapValue - 1.0));
+    vec3 N;
+    if (useNormalMapping == 1) {
+        vec3 normalMapValue = texture(fishNormalMap, fragTexCoord).rgb;
+        N = normalize(TBN * (2.0 * normalMapValue - 1.0)); // Apply normal mapping
+    } else {
+        N = normalize(TBN[2]); // Use the original vertex normal
+    }
 
 	// vector normalization
     vec3 L = normalize(lightPos - fragPosition);
