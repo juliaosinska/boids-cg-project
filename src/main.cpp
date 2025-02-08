@@ -406,7 +406,7 @@ int main() {
         GLuint viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
 
         glm::mat4 identityMatrix = glm::mat4(1.0f);
-        model = glm::scale(identityMatrix, glm::vec3(100.5f, 100.0f, 100.0f));
+        model = glm::scale(identityMatrix, glm::vec3(200.0f, 100.0f, 100.0f));
 
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -424,7 +424,8 @@ int main() {
 
         std::vector<Column> columns = {
             {glm::vec3(5.0f, -2.0f, 5.0f), glm::vec3(3.0f, 80.0f, 3.0f)},
-            {glm::vec3(-5.0f, -4.0f, -5.0f), glm::vec3(3.0f, 60.0f, 3.0f)}
+            {glm::vec3(-5.0f, -4.0f, -5.0f), glm::vec3(3.0f, 60.0f, 3.0f)},
+            {glm::vec3(-12.0f, -3.0f, 6.0f), glm::vec3(3.0f, 75.0f, 3.0f)}
         };
 
         // binding textures
@@ -466,6 +467,7 @@ int main() {
         
         for (auto& boid : boids) {
             boid.hasCollided = false; // reset collision state at the start of the frame
+            boid.hasCollidedWithColumn = false;
         }
 
         // boid rendering and updating
@@ -585,10 +587,12 @@ int main() {
 
         ImGui::End();
 
+        //if no slider change - this is the update that takes place!
         for (auto& boid : boids) {
             boid.update(boids, deltaTime, columns, alignWeight, cohesionWeight, separationWeight, horizontalBiasStrength);
         }
 
+        //renderOBB; //doesnt work
         //renderOBB; //doesnt work
 
         //////////////////////////////////////////////////
@@ -598,8 +602,7 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        //auto currentTime = std::chrono::high_resolution_clock::now();
-        //deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+        //used for fps calculations
         lastTime = currentTime;
         
     }
