@@ -15,4 +15,10 @@ void initializeColumnOBB(Column& column);
 
 extern std::vector<Column> columns;
 
+constexpr size_t COLUMN_VERTEX_COUNT = 24 * 8;
+constexpr size_t COLUMN_INDEX_COUNT = 36;
+
+extern GLfloat columnVertices[COLUMN_VERTEX_COUNT];
+extern GLuint columnIndices[COLUMN_INDEX_COUNT];
+
 #endif  

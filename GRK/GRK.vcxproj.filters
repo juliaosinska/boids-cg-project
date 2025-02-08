@@ -29,10 +29,10 @@
     <None Include="..\shaders\fish_shader.vert">
       <Filter>Shadery</Filter>
     </None>
-    <None Include="..\src\col.vert">
+    <None Include="..\shaders\col.frag">
       <Filter>Shadery</Filter>
     </None>
-    <None Include="..\src\col.frag">
+    <None Include="..\shaders\col.vert">
       <Filter>Shadery</Filter>
     </None>
   </ItemGroup>

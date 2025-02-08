@@ -21,6 +21,7 @@
 #include <chrono>
 #include <thread>
 #include "Column.h"
+#include <cstddef>
 
 const float panelWidth = 300.0f;
 
@@ -45,14 +46,14 @@ static int useNormalMapping = 1;
 
 Core::RenderContext fishContext;
 GLuint fishNormalMap, fishTexture;
+GLuint columnNormalMap, columnTexture;
 
 glm::vec3 lightPos = glm::vec3(10.0f, 10.0f, 10.0f);
 glm::vec3 lightColor = glm::vec3(300.0f, 300.0f, 300.0f);
 glm::vec3 objectColor = glm::vec3(0.8f, 0.3f, 0.3f);
 
-
-GLfloat columnVertices[216];  // size is 36 segments * 6 values per segment (2 triangles per segment)
-GLuint columnVBO, columnVAO;
+//GLfloat columnVertices[216];  // size is 36 segments * 6 values per segment (2 triangles per segment)
+GLuint columnVBO, columnVAO, columnEBO;
 
 //void generateColumn() {
 //    return
@@ -244,6 +245,13 @@ int main() {
         return -1;
     }
 
+    columnNormalMap = loadTexture("../textures/column_normal_map.png");
+    columnTexture = loadTexture("../textures/column_texture.png");
+    if (columnNormalMap == 0 || columnTexture == 0) {
+        std::cout << "Error: Failed to load one or more textures!" << std::endl;
+        return -1;
+    }
+
     // shader for our basic wire cube
     Shader shaderProgram("../shaders/cube.vert", "../shaders/cube.frag");
     VAO boxVAO;
@@ -259,11 +267,29 @@ int main() {
     boxVAO.Unbind();
     boxVBO.Unbind();
     boxEBO.Unbind();
+
+    VAO columnVAO;
+    columnVAO.Bind();
+    VBO columnVBO(columnVertices, COLUMN_VERTEX_COUNT * sizeof(GLfloat));
+    EBO columnEBO(columnIndices, COLUMN_INDEX_COUNT * sizeof(GLuint));
+    // position
+    columnVAO.LinkAttrib(columnVBO, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
+    // normals
+    columnVAO.LinkAttrib(columnVBO, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    // texture coords
+    columnVAO.LinkAttrib(columnVBO, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    columnVAO.Unbind();
+    columnVBO.Unbind();
+    columnEBO.Unbind();
     shaderProgram.Activate();
 
     //shader for fish
     Shader fishShader("../shaders/fish_shader.vert", "../shaders/fish_shader.frag");
     fishShader.Activate();
+
+    //shader for columns
+    Shader columnShader("../shaders/col.vert", "../shaders/col.frag");
+    columnShader.Activate();
 
     // matrixes for the camera
     glm::mat4 model = glm::mat4(1.0f);
@@ -369,6 +395,8 @@ int main() {
         fishShader.SetVec3("cameraPos", camera.Position);
         fishShader.SetVec3("objectColor", objectColor);
 
+        renderBoids(boids, fishShader);
+
         // program shader
         glUniform3f(glGetUniformLocation(shaderProgram.ID, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
         shaderProgram.Activate();
@@ -388,25 +416,49 @@ int main() {
         // draws wire cube for the boids to fly in
         glUniform3fv(glGetUniformLocation(shaderProgram.ID, "color"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
         glDrawElements(GL_LINES, sizeof(boxIndices) / sizeof(int), GL_UNSIGNED_INT, 0);
-        
+
         //column rendering
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        columnShader.Activate();
 
         std::vector<Column> columns = {
             {glm::vec3(5.0f, -2.0f, 5.0f), glm::vec3(3.0f, 80.0f, 3.0f)},
             {glm::vec3(-5.0f, -4.0f, -5.0f), glm::vec3(3.0f, 60.0f, 3.0f)}
         };
 
+        // binding textures
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, columnNormalMap);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, columnTexture);
 
+        camera.Matrix(fishShader, "camMatrix");
+
+        // set uniforms for column shader
+        columnShader.SetInt("columnNormalMap", 0);
+        columnShader.SetInt("columnTexture", 1);
+        columnShader.SetInt("useNormalMapping", useNormalMapping);
+
+        columnShader.SetMat4("view", view);
+        //columnShader.SetMat4("modelMatrix", columnModel);
+        columnShader.SetVec3("lightPos", lightPos);
+        columnShader.SetVec3("lightColor", lightColor);
+        columnShader.SetVec3("cameraPos", camera.Position);
+        columnShader.SetVec3("objectColor", objectColor);
+
+        // Render columns
         for (auto& column : columns) {
             initializeColumnOBB(column);
 
             glm::mat4 columnModel = glm::mat4(1.0f);
             columnModel = glm::translate(columnModel, column.position);
             columnModel = glm::scale(columnModel, column.size);
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(columnModel));
-            glUniform3fv(glGetUniformLocation(shaderProgram.ID, "color"), 1, glm::value_ptr(glm::vec3(0.8f, 0.8f, 0.8f)));
-            glDrawElements(GL_LINES, sizeof(boxIndices) / sizeof(int), GL_UNSIGNED_INT, 0);
+
+            columnShader.SetMat4("modelMatrix", columnModel);
+
+            //glBindVertexArray(columnVAO);
+            glDrawElements(GL_TRIANGLES, sizeof(columnIndices) / sizeof(int), GL_UNSIGNED_INT, 0);
         }
 
         ///////////////// boid rendering /////////////////
@@ -537,7 +589,6 @@ int main() {
             boid.update(boids, deltaTime, columns, alignWeight, cohesionWeight, separationWeight, horizontalBiasStrength);
         }
 
-        renderBoids(boids, fishShader);
         //renderOBB; //doesnt work
 
         //////////////////////////////////////////////////

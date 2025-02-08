@@ -19,12 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\shaders\col.frag" />
+    <None Include="..\shaders\col.vert" />
     <None Include="..\shaders\cube.frag" />
     <None Include="..\shaders\cube.vert" />
     <None Include="..\shaders\fish_shader.frag" />
     <None Include="..\shaders\fish_shader.vert" />
-    <None Include="..\src\col.frag" />
-    <None Include="..\src\col.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Boids.h" />
