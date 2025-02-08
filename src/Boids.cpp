@@ -25,16 +25,16 @@ Boid::Boid(glm::vec3 startPosition, glm::vec3 startVelocity, int groupID, glm::v
     //could add something dynamic here mayhaps?
 }
 
-void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::vector<Column>& columns) {
+void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::vector<Column>& columns, float alignWeight, float cohesionWeight, float separationWeight, float horizontalBiasStrength) {
     // define cube boundaries - if we want a bigger aquarium, gotta change it here
     const float boundaryThreshold = 1.0f;
     const float cubeMin = -10.0f;
     const float cubeMax = 10.0f;
 
     // Define weights for the behaviors
-    float alignWeight = 0.4f; //zmniejszone sprawia ze ryby w malych stadach tak dziko nie wibruj¹
-    float cohesionWeight = 0.03f;
-    float separationWeight = 0.4f;
+    //float alignWeight = 0.4; //zmniejszone sprawia ze ryby w malych stadach tak dziko nie wibruj¹
+    //float cohesionWeight = 0.03f;
+    //float separationWeight = 0.4f;
 
     float wallAvoidanceWeight = 0.5f; 
 
@@ -46,7 +46,7 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::ve
     cohesionForce.y *= 10.9f;   // fighting the fish columns !!!!!!!!!!
     separationForce.y *= 1.4f; 
 
-    float horizontalBiasStrength = 0.1f; // Adjust this value to control the strength of the bias
+    //float horizontalBiasStrength = 0.1f; // Adjust this value to control the strength of the bias
     glm::vec3 horizontalBiasForce = glm::vec3(0.0f, -velocity.y * horizontalBiasStrength, 0.0f);
 
     glm::vec4 wallNormalAndDistance = getBoundaryNormalAndDistance(position);

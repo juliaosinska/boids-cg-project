@@ -29,12 +29,19 @@ const unsigned int windowHeight = 800;
 
 static int numGroups = 3;
 static int numBoidsPerGroup = 70;
+
 static float maxSpeed = 0.02f;
-static int useNormalMapping = 1;
+static float maxForce = 0.01f;
+static float alignWeight = 0.4f;
+static float cohesionWeight = 0.03f;
+static float separationWeight = 0.4f;
+static float horizontalBiasStrength = 0.1f;
 
 static bool mouseRightClicked = false;
 static glm::vec2 mouseClickPosition;
 static bool isAttractionMode = false;
+
+static int useNormalMapping = 1;
 
 Core::RenderContext fishContext;
 GLuint fishNormalMap, fishTexture;
@@ -318,66 +325,6 @@ int main() {
         ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::SetNextWindowSize(ImVec2(panelWidth, windowHeight));
 
-        // panel for interactive elements
-        ImGui::Begin("User controls panel", nullptr, ImGuiWindowFlags_NoResize);
-
-        ImGui::Text("Boid groups parameters");
-        ImGui::Spacing();
-
-        // slider for number of boid groups
-        ImGui::Text("Number of Groups");
-        ImGui::SliderInt("##slider1", &numGroups, 1, 10);
-
-        // slider for number of boids per group
-        ImGui::Text("Boids per Group");
-        ImGui::SliderInt("##slider2", &numBoidsPerGroup, 1, 100);
-
-        ImGui::Spacing();
-
-        // button to reinitialize boids
-        if (ImGui::Button("Apply Changes")) {
-            boids.clear();
-            setUpBoids(boids, numGroups, numBoidsPerGroup);
-        }
-
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-
-        ImGui::Text("Boid parameters");
-        ImGui::Spacing();
-
-        // slider for boid speed
-        ImGui::Text("Boids' speed");
-        if (ImGui::SliderFloat("##slider3", &maxSpeed, 0.01f, 0.1f)) {
-            // update maxSpeed for all boids in real-time
-            for (auto& boid : boids) {
-                boid.maxSpeed = maxSpeed;
-            }
-        }
-
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-
-        // toggle for attraction/dispersion mode
-        ImGui::Text("Interaction Mode");
-        if (ImGui::Checkbox("Attraction Mode", &isAttractionMode)) {
-        }
-
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-
-        ImGui::Text("Mappings' parameters");
-        ImGui::Spacing();
-        if (ImGui::Checkbox("Enable Normal Mapping", (bool*)&useNormalMapping)) {
-            fishShader.Activate();
-            fishShader.SetInt("useNormalMapping", useNormalMapping);
-        }
-
-        ImGui::End();
-
         // allows for camera movement
         if (!ImGui::GetIO().WantCaptureMouse) {
             // only process camera inputs if ImGui is not using the mouse
@@ -486,8 +433,108 @@ int main() {
             }
         }
 
+        // panel for interactive elements
+        ImGui::Begin("User controls panel", nullptr, ImGuiWindowFlags_NoResize);
+
+        ImGui::Text("Boid groups parameters");
+        ImGui::Spacing();
+
+        // slider for number of boid groups
+        ImGui::Text("Number of Groups");
+        ImGui::SliderInt("##slider1", &numGroups, 1, 10);
+
+        // slider for number of boids per group
+        ImGui::Text("Boids per Group");
+        ImGui::SliderInt("##slider2", &numBoidsPerGroup, 1, 100);
+
+        ImGui::Spacing();
+
+        // button to reinitialize boids
+        if (ImGui::Button("Apply Changes")) {
+            boids.clear();
+            setUpBoids(boids, numGroups, numBoidsPerGroup);
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        ImGui::Text("Boid parameters");
+        ImGui::Spacing();
+
+        // slider for boid speed
+        ImGui::Text("Boids' speed");
+        if (ImGui::SliderFloat("##slider3", &maxSpeed, 0.01f, 0.1f)) {
+            // update maxSpeed for all boids in real-time
+            for (auto& boid : boids) {
+                boid.maxSpeed = maxSpeed;
+            }
+        }
+
+        // slider for boid force
+        ImGui::Text("Boids' force");
+        if (ImGui::SliderFloat("##slider7", &maxForce, 0.01f, 0.1f)) {
+            for (auto& boid : boids) {
+                boid.maxForce = maxForce;
+            }
+        }
+
+        // slider for boid align weight
+        ImGui::Text("Boids' align weight");
+        if (ImGui::SliderFloat("##slider4", &alignWeight, 0.0f, 1.0f)) {
+            for (auto& boid : boids) {
+                boid.update(boids, deltaTime, columns, alignWeight, cohesionWeight, separationWeight, horizontalBiasStrength);
+            }
+        }
+
+        // slider for boid cohesion weight
+        ImGui::Text("Boids' cohesion weight");
+        if (ImGui::SliderFloat("##slider5", &cohesionWeight, 0.0f, 1.0f)) {
+            for (auto& boid : boids) {
+                boid.update(boids, deltaTime, columns, alignWeight, cohesionWeight, separationWeight, horizontalBiasStrength);
+            }
+        }
+
+        // slider for boid separation weight
+        ImGui::Text("Boids' separation weight");
+        if (ImGui::SliderFloat("##slider6", &separationWeight, 0.0f, 1.0f)) {
+            for (auto& boid : boids) {
+                boid.update(boids, deltaTime, columns, alignWeight, cohesionWeight, separationWeight, horizontalBiasStrength);
+            }
+        }
+
+        // slider for boid horizontal bias weight
+        ImGui::Text("Boids' horizontal bias weight");
+        if (ImGui::SliderFloat("##slider8", &horizontalBiasStrength, 0.0f, 0.1f)) {
+            for (auto& boid : boids) {
+                boid.update(boids, deltaTime, columns, alignWeight, cohesionWeight, separationWeight, horizontalBiasStrength);
+            }
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        // toggle for attraction/dispersion mode
+        ImGui::Text("Interaction Mode");
+        if (ImGui::Checkbox("Attraction Mode", &isAttractionMode)) {
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        ImGui::Text("Mappings' parameters");
+        ImGui::Spacing();
+        if (ImGui::Checkbox("Enable Normal Mapping", (bool*)&useNormalMapping)) {
+            fishShader.Activate();
+            fishShader.SetInt("useNormalMapping", useNormalMapping);
+        }
+
+        ImGui::End();
+
         for (auto& boid : boids) {
-            boid.update(boids, deltaTime, columns);
+            boid.update(boids, deltaTime, columns, alignWeight, cohesionWeight, separationWeight, horizontalBiasStrength);
         }
 
         renderBoids(boids, fishShader);
