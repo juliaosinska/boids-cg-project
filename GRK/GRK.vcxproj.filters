@@ -146,5 +146,11 @@
     <Image Include="..\textures\fish_texture.png">
       <Filter>Pliki zasobów</Filter>
     </Image>
+    <Image Include="..\textures\column_normal_map.png">
+      <Filter>Pliki zasobów</Filter>
+    </Image>
+    <Image Include="..\textures\column_texture.png">
+      <Filter>Pliki zasobów</Filter>
+    </Image>
   </ItemGroup>
 </Project>

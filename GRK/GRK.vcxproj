@@ -64,6 +64,8 @@
     <ClCompile Include="..\src\VBO.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\textures\column_normal_map.png" />
+    <Image Include="..\textures\column_texture.png" />
     <Image Include="..\textures\fish_normal_map.png" />
     <Image Include="..\textures\fish_texture.png" />
   </ItemGroup>

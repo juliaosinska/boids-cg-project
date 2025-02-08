@@ -10,6 +10,7 @@ layout(location = 3) in vec3 vertexTangent;
 uniform mat4 view;
 uniform mat4 modelMatrix;
 uniform mat4 camMatrix;
+uniform vec3 scale; 
 
 out vec2 fragTexCoord;
 out vec3 fragPosition;
@@ -28,7 +29,7 @@ void main()
     TBN = mat3(T, B, N);
 
     // texture coordinates
-    fragTexCoord = vertexTexCoord;
+    fragTexCoord = vertexTexCoord * scale.xy;;
 
     // position (clip-space)
     gl_Position = camMatrix * view  * worldPosition;

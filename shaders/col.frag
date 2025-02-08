@@ -19,7 +19,7 @@ out vec4 out_color;
 
 void main()
 {
-    vec2 fragTexCoord = fragTexCoord * 10.0;
+    vec2 fragTexCoord = fragTexCoord * 0.25;
 
     // color texture
     vec4 textureColor = texture(columnTexture, fragTexCoord);
@@ -47,7 +47,7 @@ void main()
     vec3 diffuse = diff * lightColor;
 
     // specular lighting
-    float shininess = 8000.0;
+    float shininess = 16.0;
     float spec = pow(max(dot(V, R), 0.0), shininess);
     vec3 specular = spec * lightColor;
 
@@ -58,6 +58,4 @@ void main()
 	// final color
     vec3 finalColor = (diffuse + specular + ambient) * attenuation * textureColor.rgb;
     out_color = vec4(finalColor, textureColor.a);
-    //out_color = vec4(normalMapValue, 1.0);
-    //out_color = vec4(textureColor, 1.0);
 }

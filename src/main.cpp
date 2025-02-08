@@ -273,11 +273,13 @@ int main() {
     VBO columnVBO(columnVertices, COLUMN_VERTEX_COUNT * sizeof(GLfloat));
     EBO columnEBO(columnIndices, COLUMN_INDEX_COUNT * sizeof(GLuint));
     // position
-    columnVAO.LinkAttrib(columnVBO, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
+    columnVAO.LinkAttrib(columnVBO, 0, 3, GL_FLOAT, 11 * sizeof(float), (void*)0);
     // normals
-    columnVAO.LinkAttrib(columnVBO, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    columnVAO.LinkAttrib(columnVBO, 1, 3, GL_FLOAT, 11 * sizeof(float), (void*)(3 * sizeof(float)));
     // texture coords
-    columnVAO.LinkAttrib(columnVBO, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    columnVAO.LinkAttrib(columnVBO, 2, 2, GL_FLOAT, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+    // tangents
+    columnVAO.LinkAttrib(columnVBO, 3, 3, GL_FLOAT, 11 * sizeof(float), (void*)(8 * sizeof(float)));
     columnVAO.Unbind();
     columnVBO.Unbind();
     columnEBO.Unbind();
@@ -421,11 +423,13 @@ int main() {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         columnShader.Activate();
+        columnVAO.Bind();
 
+        float boxBottom = -10.0f;
         std::vector<Column> columns = {
-            {glm::vec3(5.0f, -2.0f, 5.0f), glm::vec3(3.0f, 80.0f, 3.0f)},
-            {glm::vec3(-5.0f, -4.0f, -5.0f), glm::vec3(3.0f, 60.0f, 3.0f)},
-            {glm::vec3(-12.0f, -3.0f, 6.0f), glm::vec3(3.0f, 75.0f, 3.0f)}
+            {glm::vec3(5.0f, boxBottom + (15.0f / 2.0f), 5.0f), glm::vec3(1.0f, 15.0f, 1.0f)},
+            {glm::vec3(-5.0f, boxBottom + (12.0f / 2.0f), -5.0f), glm::vec3(2.0f, 12.0f, 2.0f)},
+            {glm::vec3(-12.0f, boxBottom + (10.0f / 2.0f), 6.0f), glm::vec3(3.0f, 10.0f, 3.0f)}
         };
 
         // binding textures
@@ -455,12 +459,13 @@ int main() {
             glm::mat4 columnModel = glm::mat4(1.0f);
             columnModel = glm::translate(columnModel, column.position);
             columnModel = glm::scale(columnModel, column.size);
-
+            
             columnShader.SetMat4("modelMatrix", columnModel);
-
-            //glBindVertexArray(columnVAO);
-            glDrawElements(GL_TRIANGLES, sizeof(columnIndices) / sizeof(int), GL_UNSIGNED_INT, 0);
+            columnShader.SetVec3("scale", column.size);
+            
+            glDrawElements(GL_TRIANGLES, COLUMN_INDEX_COUNT, GL_UNSIGNED_INT, 0);  
         }
+        columnVAO.Unbind();
 
         ///////////////// boid rendering /////////////////
 
@@ -591,9 +596,6 @@ int main() {
         for (auto& boid : boids) {
             boid.update(boids, deltaTime, columns, alignWeight, cohesionWeight, separationWeight, horizontalBiasStrength);
         }
-
-        //renderOBB; //doesnt work
-        //renderOBB; //doesnt work
 
         //////////////////////////////////////////////////
 
