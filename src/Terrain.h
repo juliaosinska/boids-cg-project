@@ -79,20 +79,20 @@ private:
             tempNormals[i2] += normal;
         }
 
-        // Normalize and assign normals to vertices
-        for (size_t i = 0; i < tempNormals.size(); i++) {
-            tempNormals[i] = glm::normalize(tempNormals[i]);
+        //// Normalize and assign normals to vertices
+        //for (size_t i = 0; i < tempNormals.size(); i++) {
+        //    tempNormals[i] = glm::normalize(tempNormals[i]);
 
-            vertices[i * 8 + 3] = tempNormals[i].x;
-            vertices[i * 8 + 4] = tempNormals[i].y;
-            vertices[i * 8 + 5] = tempNormals[i].z;
-        }
-        for (size_t i = 0; i < tempNormals.size(); i++) {
-            std::cout << "Vertex " << i << " Normal: ("
-                << tempNormals[i].x << ", "
-                << tempNormals[i].y << ", "
-                << tempNormals[i].z << ")\n";
-        }
+        //    vertices[i * 8 + 3] = tempNormals[i].x;
+        //    vertices[i * 8 + 4] = tempNormals[i].y;
+        //    vertices[i * 8 + 5] = tempNormals[i].z;
+        //}
+        //for (size_t i = 0; i < tempNormals.size(); i++) {
+        //    std::cout << "Vertex " << i << " Normal: ("
+        //        << tempNormals[i].x << ", "
+        //        << tempNormals[i].y << ", "
+        //        << tempNormals[i].z << ")\n";
+        //}
 
     }
 };

@@ -53,6 +53,12 @@
     <None Include="..\shaders\depth.vert">
       <Filter>Shadery</Filter>
     </None>
+    <None Include="..\shaders\skybox.frag">
+      <Filter>Shadery</Filter>
+    </None>
+    <None Include="..\shaders\skybox.vert">
+      <Filter>Shadery</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Boids.h">
@@ -177,6 +183,15 @@
       <Filter>Pliki zasobów</Filter>
     </Image>
     <Image Include="..\textures\sand2.png">
+      <Filter>Pliki zasobów</Filter>
+    </Image>
+    <Image Include="..\textures\test.png">
+      <Filter>Pliki zasobów</Filter>
+    </Image>
+    <Image Include="..\textures\testBack.png">
+      <Filter>Pliki zasobów</Filter>
+    </Image>
+    <Image Include="..\textures\waterTop.png">
       <Filter>Pliki zasobów</Filter>
     </Image>
   </ItemGroup>

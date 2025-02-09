@@ -66,6 +66,43 @@ GLuint columnVBO, columnVAO, columnEBO;
 //    return
 //}
 
+
+
+float skyboxVertices[] =
+{
+    //   Coordinates
+    -1.0f, -1.0f,  1.0f,//        7--------6
+     1.0f, -1.0f,  1.0f,//       /|       /|
+     1.0f, -1.0f, -1.0f,//      4--------5 |
+    -1.0f, -1.0f, -1.0f,//      | |      | |
+    -1.0f,  1.0f,  1.0f,//      | 3------|-2
+     1.0f,  1.0f,  1.0f,//      |/       |/
+     1.0f,  1.0f, -1.0f,//      0--------1
+    -1.0f,  1.0f, -1.0f
+};
+
+unsigned int skyboxIndices[] =
+{
+    // Right
+    1, 2, 6,
+    6, 5, 1,
+    // Left
+    0, 4, 7,
+    7, 3, 0,
+    // Top
+    4, 5, 6,
+    6, 7, 4,
+    // Bottom
+    0, 3, 2,
+    2, 1, 0,
+    // Back
+    0, 1, 5,
+    5, 4, 0,
+    // Front
+    3, 7, 6,
+    6, 2, 3
+};
+
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -261,8 +298,6 @@ int main() {
         return -1;
     }
 
-
-
     // shader for our basic wire cube
     Shader shaderProgram("../shaders/cube.vert", "../shaders/cube.frag");
     VAO boxVAO;
@@ -297,7 +332,7 @@ int main() {
 
     Shader terrainShader("../shaders/default.vert", "../shaders/default.frag");
     // After columnVAO setup
-    Terrain terrain(41, 21, 2.0f); // Adjust parameters as needed
+    Terrain terrain(50.0f ,50.0f, 2.0f); // Adjust parameters as needed
 
     VAO terrainVAO;
     terrainVAO.Bind();
@@ -314,7 +349,7 @@ int main() {
     terrainEBO.Unbind();
 
     glm::mat4 terrainModel = glm::mat4(1.0f);
-    terrainModel = glm::translate(terrainModel, glm::vec3(-20.0f, -10.0f, -40.0f));
+    terrainModel = glm::translate(terrainModel, glm::vec3(-20.0f, -10.0f, -60.0f));
 
     shaderProgram.Activate();
 
@@ -330,6 +365,9 @@ int main() {
 
     Shader debugShader("../shaders/debug.vert", "../shaders/debug.frag");
 
+    Shader skyboxShader("../shaders/skybox.vert", "../shaders/skybox.frag");
+    skyboxShader.Activate();
+    glUniform1i(glGetUniformLocation(skyboxShader.ID, "skybox"), 0);
 
     // matrixes for the camera
     glm::mat4 model = glm::mat4(1.0f);
@@ -387,7 +425,7 @@ int main() {
 
 
     // Matrices needed for the light's perspective
-    glm::mat4 orthgonalProjection = glm::ortho(-35.0f, 35.0f, -35.0f, 35.0f, 0.1f, 75.0f);
+    glm::mat4 orthgonalProjection = glm::ortho(-135.0f, 135.0f, -135.0f, 135.0f, 0.1f, 175.0f);
     glm::mat4 lightView = glm::lookAt(2.0f * lightPos, glm::vec3(0.0f, 0.0f, -30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 lightProjection = orthgonalProjection * lightView;
 
@@ -416,7 +454,75 @@ int main() {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
+    // Create VAO, VBO, and EBO for the skybox
+    unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glGenBuffers(1, &skyboxEBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyboxEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(skyboxIndices), &skyboxIndices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+
+    // All the faces of the cubemap (make sure they are in this exact order)
+    std::string facesCubemap[6] =
+    {
+        "../textures/test.png", // prawo
+        "../textures/test.png",    // lewo
+        "../textures/waterTop.png", // gora
+        "../textures/sand2.png", // dol
+        "../textures/testBack.png", // front
+        "../textures/testBack.png" // tyl
+    };
+
+    // Creates the cubemap texture object
+    unsigned int cubemapTexture;
+    glGenTextures(1, &cubemapTexture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    // These are very important to prevent seams
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    // This might help with seams on some systems
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+    // Cycles through all the textures and attaches them to the cubemap object
+    for (unsigned int i = 0; i < 6; i++)
+    {
+        int width, height, nrChannels;
+        unsigned char* data = stbi_load(facesCubemap[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            //stbi_set_flip_vertically_on_load(false);
+            glTexImage2D
+            (
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                0,
+                GL_RGB,
+                width,
+                height,
+                0,
+                GL_RGB,
+                GL_UNSIGNED_BYTE,
+                data
+            );
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Failed to load texture: " << facesCubemap[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
 
     while (!glfwWindowShouldClose(window)) {
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -551,26 +657,7 @@ int main() {
 
         // program shader
         glUniform3f(glGetUniformLocation(shaderProgram.ID, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-        shaderProgram.Activate();
-        camera.Matrix(shaderProgram, "camMatrix");
-
-        GLuint modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
-        GLuint viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
-
-        glm::mat4 identityMatrix = glm::mat4(1.0f);
-        model = glm::scale(identityMatrix, glm::vec3(200.0f, 100.0f, 100.0f));
-
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-        boxVAO.Bind();
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        // draws wire cube for the boids to fly in
-        glUniform3fv(glGetUniformLocation(shaderProgram.ID, "color"), 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
-        glDrawElements(GL_LINES, sizeof(boxIndices) / sizeof(int), GL_UNSIGNED_INT, 0);
-
-        //column rendering
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  
 
         columnShader.Activate();
         columnVAO.Bind();
@@ -644,6 +731,31 @@ int main() {
         terrainVAO.Bind();
         glDrawElements(GL_TRIANGLES, terrain.indices.size(), GL_UNSIGNED_INT, 0);
         terrainVAO.Unbind();
+
+
+        // Since the cubemap will always have a depth of 1.0, we need that equal sign so it doesn't get discarded
+        glDepthFunc(GL_LEQUAL);
+
+        skyboxShader.Activate();
+        glm::mat4 view = glm::mat4(1.0f);
+        glm::mat4 projection = glm::mat4(1.0f);
+        // We make the mat4 into a mat3 and then a mat4 again in order to get rid of the last row and column
+        // The last row and column affect the translation of the skybox (which we don't want to affect)
+        view = glm::mat4(glm::mat3(glm::lookAt(camera.Position, camera.Position + camera.Orientation, camera.Up)));
+        projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / windowHeight, 0.1f, 100.0f);
+        glUniformMatrix4fv(glGetUniformLocation(skyboxShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(skyboxShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+        // Draws the cubemap as the last object so we can save a bit of performance by discarding all fragments
+        // where an object is present (a depth of 1.0f will always fail against any object's depth value)
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+        // Switch back to the normal depth function
+        glDepthFunc(GL_LESS);
 
         ///////////////// boid rendering /////////////////
 
