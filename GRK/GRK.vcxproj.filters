@@ -35,6 +35,24 @@
     <None Include="..\shaders\col.vert">
       <Filter>Shadery</Filter>
     </None>
+    <None Include="..\shaders\debug.frag">
+      <Filter>Shadery</Filter>
+    </None>
+    <None Include="..\shaders\debug.vert">
+      <Filter>Shadery</Filter>
+    </None>
+    <None Include="..\shaders\default.frag">
+      <Filter>Shadery</Filter>
+    </None>
+    <None Include="..\shaders\default.vert">
+      <Filter>Shadery</Filter>
+    </None>
+    <None Include="..\shaders\depth.frag">
+      <Filter>Shadery</Filter>
+    </None>
+    <None Include="..\shaders\depth.vert">
+      <Filter>Shadery</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Boids.h">
@@ -74,6 +92,12 @@
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Column.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\PerlinNoise.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Terrain.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
   </ItemGroup>
@@ -150,6 +174,9 @@
       <Filter>Pliki zasobów</Filter>
     </Image>
     <Image Include="..\textures\column_texture.png">
+      <Filter>Pliki zasobów</Filter>
+    </Image>
+    <Image Include="..\textures\sand2.png">
       <Filter>Pliki zasobów</Filter>
     </Image>
   </ItemGroup>

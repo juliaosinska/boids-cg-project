@@ -22,6 +22,7 @@
 #include <thread>
 #include "Column.h"
 #include <cstddef>
+#include "Terrain.h"
 
 const float panelWidth = 300.0f;
 
@@ -47,9 +48,11 @@ static int useNormalMapping = 1;
 Core::RenderContext fishContext;
 GLuint fishNormalMap, fishTexture;
 GLuint columnNormalMap, columnTexture;
+GLuint sandTexture;
 
 glm::vec3 lightPos = glm::vec3(10.0f, 10.0f, 10.0f);
 glm::vec3 lightColor = glm::vec3(300.0f, 300.0f, 300.0f);
+glm::vec4 lightColorBetter = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 glm::vec3 objectColor = glm::vec3(0.8f, 0.3f, 0.3f);
 
 //GLfloat columnVertices[216];  // size is 36 segments * 6 values per segment (2 triangles per segment)
@@ -252,6 +255,14 @@ int main() {
         return -1;
     }
 
+    sandTexture = loadTexture("../textures/sand2.png"); 
+    if (sandTexture == 0) {
+        std::cout << "Error: Failed to load terrain texture!" << std::endl;
+        return -1;
+    }
+
+
+
     // shader for our basic wire cube
     Shader shaderProgram("../shaders/cube.vert", "../shaders/cube.frag");
     VAO boxVAO;
@@ -283,6 +294,25 @@ int main() {
     columnVAO.Unbind();
     columnVBO.Unbind();
     columnEBO.Unbind();
+
+    Shader terrainShader("../shaders/default.vert", "../shaders/default.frag");
+    // After columnVAO setup
+    Terrain terrain(41, 21, 2.0f); // Adjust parameters as needed
+
+    VAO terrainVAO;
+    terrainVAO.Bind();
+    VBO terrainVBO(terrain.vertices.data(), terrain.vertices.size() * sizeof(float));
+    EBO terrainEBO(terrain.indices.data(), terrain.indices.size() * sizeof(unsigned int));
+
+    // Link attributes (match your shader's layout)
+    terrainVAO.LinkAttrib(terrainVBO, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0); // Position
+    terrainVAO.LinkAttrib(terrainVBO, 2, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float))); // Normal
+    terrainVAO.LinkAttrib(terrainVBO, 1, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float))); // TexCoord
+
+    terrainVAO.Unbind();
+    terrainVBO.Unbind();
+    terrainEBO.Unbind();
+
     shaderProgram.Activate();
 
     //shader for fish
@@ -466,6 +496,32 @@ int main() {
             glDrawElements(GL_TRIANGLES, COLUMN_INDEX_COUNT, GL_UNSIGNED_INT, 0);  
         }
         columnVAO.Unbind();
+
+        // After column rendering code
+        terrainShader.Activate(); // Use the existing shader for terrain
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, sandTexture);
+        glUniform1i(glGetUniformLocation(terrainShader.ID, "tex0"), 0); // Match your shader's uniform name
+        if (sandTexture == 0) {
+            std::cout << "Texture failed to load!" << std::endl;
+        }
+
+        glm::mat4 terrainModel = glm::mat4(1.0f);
+        terrainModel = glm::translate(terrainModel, glm::vec3(-20.0f, -10.0f, -40.0f));
+
+        glUniformMatrix4fv(glGetUniformLocation(terrainShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(terrainModel));
+        glUniform4f(glGetUniformLocation(terrainShader.ID, "lightColor"), lightColorBetter.x, lightColorBetter.y, lightColorBetter.z, lightColorBetter.w);
+        glUniform3f(glGetUniformLocation(terrainShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+
+        // Exports the camera Position to the Fragment Shader for specular lighting
+        glUniform3f(glGetUniformLocation(terrainShader.ID, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+        // Export the camMatrix to the Vertex Shader of the pyramid
+        camera.Matrix(terrainShader, "camMatrix");
+
+        terrainVAO.Bind();
+        glDrawElements(GL_TRIANGLES, terrain.indices.size(), GL_UNSIGNED_INT, 0);
+        terrainVAO.Unbind();
 
         ///////////////// boid rendering /////////////////
 
