@@ -25,37 +25,37 @@ void initializeColumnOBB(Column& column) {
 
 GLfloat columnVertices[COLUMN_VERTEX_COUNT] = {
     // Positions          // Normals           // Texture Coords    // Tangents
-    // Front face
+    // front face
     -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,      1.0f, 0.0f, 0.0f,
      0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f,      1.0f, 0.0f, 0.0f,
      0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,      1.0f, 0.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f,      1.0f, 0.0f, 0.0f,
 
-    // Back face
+    // back face
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,     -1.0f, 0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,     -1.0f, 0.0f, 0.0f,
      0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,     -1.0f, 0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,     -1.0f, 0.0f, 0.0f,
 
-    // Left face
+    // left face
     -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,      0.0f, 0.0f, 1.0f,
     -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,      0.0f, 0.0f, 1.0f,
     -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,      0.0f, 0.0f, 1.0f,
     -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,      0.0f, 0.0f, 1.0f,
 
-    // Right face
+    // right face
      0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,      0.0f, 0.0f, -1.0f,
      0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,      0.0f, 0.0f, -1.0f,
      0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,      0.0f, 0.0f, -1.0f,
      0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,      0.0f, 0.0f, -1.0f,
 
-     // Top face
+     // top face
      -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,     1.0f, 0.0f, 0.0f,
       0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,     1.0f, 0.0f, 0.0f,
       0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,     1.0f, 0.0f, 0.0f,
      -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,     1.0f, 0.0f, 0.0f,
 
-     // Bottom face
+     // bottom face
      -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,     1.0f, 0.0f, 0.0f,
       0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,     1.0f, 0.0f, 0.0f,
       0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,     1.0f, 0.0f, 0.0f,
@@ -63,16 +63,16 @@ GLfloat columnVertices[COLUMN_VERTEX_COUNT] = {
 };
 
 GLuint columnIndices[COLUMN_INDEX_COUNT] = {
-    // Front face
+    // front face
     0, 1, 2, 2, 3, 0,
-    // Back face
+    // back face
     4, 5, 6, 6, 7, 4,
-    // Left face
+    // left face
     8, 9, 10, 10, 11, 8,
-    // Right face
+    // right face
     12, 13, 14, 14, 15, 12,
-    // Top face
+    // top face
     16, 17, 18, 18, 19, 16,
-    // Bottom face
+    // bottom face
     20, 21, 22, 22, 23, 20
 };

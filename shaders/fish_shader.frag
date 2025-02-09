@@ -28,9 +28,9 @@ void main()
     vec3 N;
     if (useNormalMapping == 1) {
         vec3 normalMapValue = texture(fishNormalMap, fragTexCoord).rgb;
-        N = normalize(TBN * (2.0 * normalMapValue - 1.0)); // Apply normal mapping
+        N = normalize(TBN * (2.0 * normalMapValue - 1.0)); // apply normal mapping
     } else {
-        N = normalize(TBN[2]); // Use the original vertex normal
+        N = normalize(TBN[2]); // use the original vertex normal
     }
 
 	// vector normalization

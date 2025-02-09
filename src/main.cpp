@@ -52,16 +52,7 @@ glm::vec3 lightPos = glm::vec3(10.0f, 10.0f, 10.0f);
 glm::vec3 lightColor = glm::vec3(300.0f, 300.0f, 300.0f);
 glm::vec3 objectColor = glm::vec3(0.8f, 0.3f, 0.3f);
 
-//GLfloat columnVertices[216];  // size is 36 segments * 6 values per segment (2 triangles per segment)
 GLuint columnVBO, columnVAO, columnEBO;
-
-//void generateColumn() {
-//    return
-//}
-//
-//void renderColumn(Shader& shaderProgram, Camera camera) {
-//    return
-//}
 
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -86,16 +77,6 @@ void loadModelToContext(std::string path, Core::RenderContext& context)
 
     context.initFromAssimpMesh(scene->mMeshes[0]);
     std::cout << "Model loaded successfully with " << scene->mMeshes[0]->mNumVertices << " vertices" << std::endl;
-
-    KDOP14 kdop;
-    //aiMesh* mesh = scene->mMeshes[0]; // this is our fish mesh i suppose?
-    //kdop.computeFromMesh(mesh);
-
-    /*for (const auto& plane : kdop.planes) {
-        std::cout << "Plane normal: (" << plane.normal.x << ", " << plane.normal.y << ", " << plane.normal.z << ") ";
-        std::cout << "d: " << plane.d << std::endl;
-    }
-    kdop.render();*/
 }
 
 GLuint loadTexture(const std::string& path) {
@@ -209,6 +190,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+    // window initialization
     GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "Aquarium", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -238,6 +220,7 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
 
+    // loading textures
     fishNormalMap = loadTexture("../textures/fish_normal_map.png");
     fishTexture = loadTexture("../textures/fish_texture.png");
     if (fishNormalMap == 0 || fishTexture == 0) {
@@ -252,8 +235,10 @@ int main() {
         return -1;
     }
 
-    // shader for our basic wire cube
+    // shader for basic wire cube
     Shader shaderProgram("../shaders/cube.vert", "../shaders/cube.frag");
+
+    // aquarium VAO
     VAO boxVAO;
     boxVAO.Bind();
     VBO boxVBO(boxVertices, sizeof(boxVertices));
@@ -268,6 +253,7 @@ int main() {
     boxVBO.Unbind();
     boxEBO.Unbind();
 
+    // column VAO
     VAO columnVAO;
     columnVAO.Bind();
     VBO columnVBO(columnVertices, COLUMN_VERTEX_COUNT * sizeof(GLfloat));
@@ -305,7 +291,7 @@ int main() {
     // !!!!!!!!!!!!!!!!!!!!!!!!!
     std::vector<Boid> boids;
     loadModelToContext("../resources/models/fish.obj", fishContext);
-    setUpBoids(boids, numGroups, numBoidsPerGroup); // set up num of boid groups you want here : boids, num of groups, num of boids in each group
+    setUpBoids(boids, numGroups, numBoidsPerGroup); // set up number of boid groups you want here : boids, number of groups, number of boids in each group
     for (auto& boid : boids) {
         boid.context = &fishContext;
     }
@@ -331,15 +317,6 @@ int main() {
             deltaTime = targetFrameTime; // prevent too small delta times
         }
 
-        // FPS Calculation - uncomment to see fps each sec
-        //frameCount++;
-        //fpsTimer += deltaTime;
-        //if (fpsTimer >= 1.0f) { // Every second, print FPS
-        //    std::cout << "FPS: " << frameCount << std::endl;
-        //    frameCount = 0;
-        //    fpsTimer = 0.0f;
-        //}
-
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         processInput(window);
 
@@ -361,7 +338,6 @@ int main() {
         }
 
         camera.updateMatrix(45.0f, 0.1f, 100.0f);
-
 
         // handle mouse clicks
         if (mouseRightClicked && !ImGui::GetIO().WantCaptureMouse) {
@@ -446,13 +422,11 @@ int main() {
         columnShader.SetInt("useNormalMapping", useNormalMapping);
 
         columnShader.SetMat4("view", view);
-        //columnShader.SetMat4("modelMatrix", columnModel);
         columnShader.SetVec3("lightPos", lightPos);
         columnShader.SetVec3("lightColor", lightColor);
         columnShader.SetVec3("cameraPos", camera.Position);
         columnShader.SetVec3("objectColor", objectColor);
 
-        // Render columns
         for (auto& column : columns) {
             initializeColumnOBB(column);
 
@@ -486,7 +460,7 @@ int main() {
             }
             for (const auto& column : columns) {
                 if (checkOBBCollision(boid.obb, column.obb)) {
-                    boid.handleCollisionWithColumn(boid, column);  // Handle column collision logic
+                    boid.handleCollisionWithColumn(boid, column);  // handle column collision logic
                 }
                 
             }
@@ -583,6 +557,7 @@ int main() {
         ImGui::Separator();
         ImGui::Spacing();
 
+        // toggle normal mapping enabling/disabling mode
         ImGui::Text("Mappings' parameters");
         ImGui::Spacing();
         if (ImGui::Checkbox("Enable Normal Mapping", (bool*)&useNormalMapping)) {
@@ -592,7 +567,7 @@ int main() {
 
         ImGui::End();
 
-        //if no slider change - this is the update that takes place!
+        // if no slider change - this is the update that takes place!
         for (auto& boid : boids) {
             boid.update(boids, deltaTime, columns, alignWeight, cohesionWeight, separationWeight, horizontalBiasStrength);
         }
@@ -604,9 +579,8 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        //used for fps calculations
-        lastTime = currentTime;
-        
+        // used for fps calculations
+        lastTime = currentTime;   
     }
 
     glfwDestroyWindow(window);
