@@ -15,14 +15,16 @@ out vec2 texCoord;
 out vec3 Normal;
 // Outputs the current position for the Fragment Shader
 out vec3 crntPos;
-
+// Shadow map coordinates
+out vec4 FragPosLightSpace;
 
 
 // Imports the camera matrix from the main function
 uniform mat4 camMatrix;
 // Imports the model matrix from the main function
 uniform mat4 model;
-
+// Shadow map matrix
+uniform mat4 lightSpaceMatrix;
 
 void main()
 {
@@ -36,4 +38,7 @@ void main()
 	texCoord = aTex;
 	// Assigns the normal from the Vertex Data to "Normal"
     Normal = mat3(transpose(inverse(model))) * aNormal;
+
+	// Compute shadow coordinates
+    FragPosLightSpace = lightSpaceMatrix * vec4(crntPos, 1.0);
 }

@@ -622,6 +622,11 @@ int main() {
         if (sandTexture == 0) {
             std::cout << "Texture failed to load!" << std::endl;
         }
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, shadowMap);
+        terrainShader.SetInt("shadowMap", 5);
+        terrainShader.SetMat4("lightSpaceMatrix", lightProjection);
+
 
         glUniformMatrix4fv(glGetUniformLocation(terrainShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(terrainModel));
         glUniform4f(glGetUniformLocation(terrainShader.ID, "lightColor"), lightColorBetter.x, lightColorBetter.y, lightColorBetter.z, lightColorBetter.w);
@@ -771,13 +776,14 @@ int main() {
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        glUseProgram(debugShader.ID);
+        /*glUseProgram(debugShader.ID);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, shadowMap);
         glUniform1i(glGetUniformLocation(debugShader.ID, "depthMap"), 0);
 
         glBindVertexArray(quadVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDrawArrays(GL_TRIANGLES, 0, 6);*/
+
         glfwSwapBuffers(window);
         glfwPollEvents();
 
