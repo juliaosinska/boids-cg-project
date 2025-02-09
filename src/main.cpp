@@ -313,6 +313,9 @@ int main() {
     terrainVBO.Unbind();
     terrainEBO.Unbind();
 
+    glm::mat4 terrainModel = glm::mat4(1.0f);
+    terrainModel = glm::translate(terrainModel, glm::vec3(-20.0f, -10.0f, -40.0f));
+
     shaderProgram.Activate();
 
     //shader for fish
@@ -323,6 +326,11 @@ int main() {
     Shader columnShader("../shaders/col.vert", "../shaders/col.frag");
     columnShader.Activate();
 
+    Shader shadowMapProgram("../shaders/depth.vert", "../shaders/depth.frag");
+
+    Shader debugShader("../shaders/debug.vert", "../shaders/debug.frag");
+
+
     // matrixes for the camera
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -30.0f)); // sets how far away we are from the cube
@@ -330,7 +338,9 @@ int main() {
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
+    
     Camera camera(windowWidth, windowHeight, glm::vec3(-5.0f, 0.0f, 10.0f));
+    //Camera camera(windowWidth, windowHeight,2.0f * lightPos);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!
     std::vector<Boid> boids;
@@ -349,6 +359,64 @@ int main() {
     // change here if your pc can make it
     const int targetFPS = 60;
     const float targetFrameTime = 1.0f / targetFPS;
+
+    // Framebuffer for Shadow Map
+    unsigned int shadowMapFBO;
+    glGenFramebuffers(1, &shadowMapFBO);
+
+    // Texture for Shadow Map FBO
+    unsigned int shadowMapWidth = 2048, shadowMapHeight = 2048;
+    unsigned int shadowMap;
+    glGenTextures(1, &shadowMap);
+    glBindTexture(GL_TEXTURE_2D, shadowMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    // Prevents darkness outside the frustrum
+    float clampColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, clampColor);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
+    // Needed since we don't touch the color buffer
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+    // Matrices needed for the light's perspective
+    glm::mat4 orthgonalProjection = glm::ortho(-35.0f, 35.0f, -35.0f, 35.0f, 0.1f, 75.0f);
+    glm::mat4 lightView = glm::lookAt(2.0f * lightPos, glm::vec3(0.0f, 0.0f, -30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 lightProjection = orthgonalProjection * lightView;
+
+    shadowMapProgram.Activate();
+    glUniformMatrix4fv(glGetUniformLocation(shadowMapProgram.ID, "lightProjection"), 1, GL_FALSE, glm::value_ptr(lightProjection));
+
+    float quadVertices[] = {
+        // Pozycje    // Wspó³rzêdne tekstur
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+
+        -1.0f,  1.0f,  0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 1.0f
+    };
+
+    unsigned int quadVAO, quadVBO;
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glBindVertexArray(quadVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+
 
     while (!glfwWindowShouldClose(window)) {
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -371,6 +439,54 @@ int main() {
         //}
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        // Depth testing needed for Shadow Map
+        glEnable(GL_DEPTH_TEST);
+
+        // Preparations for the Shadow Map
+        glViewport(0, 0, shadowMapWidth, shadowMapHeight);
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        // Draw scene for shadow map
+        shadowMapProgram.Activate();
+        shadowMapProgram.SetMat4("lightSpaceMatrix", lightProjection);
+        // Render columns
+
+        columnVAO.Bind();
+
+        float boxBottom = -10.0f;
+        std::vector<Column> columns = {
+            {glm::vec3(5.0f, boxBottom + (15.0f / 2.0f), 5.0f), glm::vec3(1.0f, 15.0f, 1.0f)},
+            {glm::vec3(-5.0f, boxBottom + (12.0f / 2.0f), -5.0f), glm::vec3(2.0f, 12.0f, 2.0f)},
+            {glm::vec3(-12.0f, boxBottom + (10.0f / 2.0f), 6.0f), glm::vec3(3.0f, 10.0f, 3.0f)}
+        };
+
+        for (auto& column : columns) {
+            initializeColumnOBB(column);
+
+            glm::mat4 columnModel = glm::mat4(1.0f);
+            columnModel = glm::translate(columnModel, column.position);
+            columnModel = glm::scale(columnModel, column.size);
+
+            shadowMapProgram.SetMat4("model", columnModel);
+
+            glDrawElements(GL_TRIANGLES, COLUMN_INDEX_COUNT, GL_UNSIGNED_INT, 0);
+        }
+        columnVAO.Unbind();
+        
+        shadowMapProgram.SetMat4("model", terrainModel);
+        terrainVAO.Bind();
+        glDrawElements(GL_TRIANGLES, terrain.indices.size(), GL_UNSIGNED_INT, 0);
+        terrainVAO.Unbind();
+
+
+
+        // Switch back to the default framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // Switch back to the default viewport
+        glViewport(0, 0, windowWidth, windowHeight);
+
         processInput(window);
 
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -455,12 +571,12 @@ int main() {
         columnShader.Activate();
         columnVAO.Bind();
 
-        float boxBottom = -10.0f;
+        /*float boxBottom = -10.0f;
         std::vector<Column> columns = {
             {glm::vec3(5.0f, boxBottom + (15.0f / 2.0f), 5.0f), glm::vec3(1.0f, 15.0f, 1.0f)},
             {glm::vec3(-5.0f, boxBottom + (12.0f / 2.0f), -5.0f), glm::vec3(2.0f, 12.0f, 2.0f)},
             {glm::vec3(-12.0f, boxBottom + (10.0f / 2.0f), 6.0f), glm::vec3(3.0f, 10.0f, 3.0f)}
-        };
+        };*/
 
         // binding textures
         glActiveTexture(GL_TEXTURE0);
@@ -506,9 +622,6 @@ int main() {
         if (sandTexture == 0) {
             std::cout << "Texture failed to load!" << std::endl;
         }
-
-        glm::mat4 terrainModel = glm::mat4(1.0f);
-        terrainModel = glm::translate(terrainModel, glm::vec3(-20.0f, -10.0f, -40.0f));
 
         glUniformMatrix4fv(glGetUniformLocation(terrainShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(terrainModel));
         glUniform4f(glGetUniformLocation(terrainShader.ID, "lightColor"), lightColorBetter.x, lightColorBetter.y, lightColorBetter.z, lightColorBetter.w);
@@ -657,6 +770,14 @@ int main() {
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glUseProgram(debugShader.ID);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, shadowMap);
+        glUniform1i(glGetUniformLocation(debugShader.ID, "depthMap"), 0);
+
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
         glfwSwapBuffers(window);
         glfwPollEvents();
 
