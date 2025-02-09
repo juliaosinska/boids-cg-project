@@ -3,8 +3,6 @@
 // Outputs colors in RGBA
 out vec4 FragColor;
 
-
-
 // Imports the texture coordinates from the Vertex Shader
 in vec2 texCoord;
 // Imports the normal from the Vertex Shader
@@ -13,7 +11,6 @@ in vec3 Normal;
 in vec3 crntPos;
 // Shadow map coordinates
 in vec4 FragPosLightSpace;
-
 
 // Gets the Texture Unit from the main function
 uniform sampler2D tex0;
@@ -26,7 +23,7 @@ uniform vec3 camPos;
 // Shadow map
 uniform sampler2D shadowMap;
 
-float ShadowCalculation(vec4 fragPosLightSpace)
+float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
 {
     // Transform from homogeneous coordinates
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -34,39 +31,26 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 
     // Get the closest depth from the shadow map
     float closestDepth = texture(shadowMap, projCoords.xy).r;
-    
-    // Current depth of the fragment
+    // Get current fragment depth
     float currentDepth = projCoords.z;
-
-    // Shadow factor
-    float shadow = currentDepth > closestDepth ? 0.5 : 1.0; // Simple shadow (no PCF)
-
+    
+    // Compute bias based on the normal and light direction
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    
+    // Compare depths and apply bias
+    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    
     return shadow;
 }
 
 void main()
 {
-	// ambient lighting
-	float ambient = 0.20f;
+    // Calculate lighting
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(lightPos - crntPos);
 
-	// diffuse lighting
-	vec3 normal = normalize(Normal);
-	vec3 lightDirection = normalize(lightPos - crntPos);
-	float diffuse = max(dot(normal, lightDirection), 0.0f);
+    float shadow = ShadowCalculation(FragPosLightSpace, norm, lightDir);
 
-	// specular lighting
-	float specularLight = 0.50f;
-	vec3 viewDirection = normalize(camPos - crntPos);
-	vec3 reflectionDirection = reflect(-lightDirection, normal);
-	float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), 8);
-	float specular = specAmount * specularLight;
-
-	// outputs final color
-	// FragColor = texture(tex0, texCoord) * lightColor * (diffuse + ambient * specular);
-
-	// Compute shadow factor
-    float shadow = ShadowCalculation(FragPosLightSpace);
-
-    // outputs final color with shadow applied
-    FragColor = texture(tex0, texCoord) * lightColor * (diffuse * shadow + ambient + specular);
+    vec3 light = vec3(lightColor) * (1.0 - shadow);
+    FragColor = texture(tex0, texCoord) * vec4(light, 1.0);
 }

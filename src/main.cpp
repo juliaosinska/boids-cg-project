@@ -255,7 +255,7 @@ int main() {
         return -1;
     }
 
-    sandTexture = loadTexture("../textures/sand2.png"); 
+    sandTexture = loadTexture("../textures/sand2.png");
     if (sandTexture == 0) {
         std::cout << "Error: Failed to load terrain texture!" << std::endl;
         return -1;
@@ -306,8 +306,8 @@ int main() {
 
     // Link attributes (match your shader's layout)
     terrainVAO.LinkAttrib(terrainVBO, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0); // Position
-    terrainVAO.LinkAttrib(terrainVBO, 2, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float))); // Normal
-    terrainVAO.LinkAttrib(terrainVBO, 1, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float))); // TexCoord
+    terrainVAO.LinkAttrib(terrainVBO, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float))); // Normal
+    terrainVAO.LinkAttrib(terrainVBO, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float))); // TexCoord
 
     terrainVAO.Unbind();
     terrainVBO.Unbind();
@@ -338,7 +338,7 @@ int main() {
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
-    
+
     Camera camera(windowWidth, windowHeight, glm::vec3(-5.0f, 0.0f, 10.0f));
     //Camera camera(windowWidth, windowHeight,2.0f * lightPos);
 
@@ -451,6 +451,7 @@ int main() {
         // Draw scene for shadow map
         shadowMapProgram.Activate();
         shadowMapProgram.SetMat4("lightSpaceMatrix", lightProjection);
+        shadowMapProgram.SetMat4("view", view);
         // Render columns
 
         columnVAO.Bind();
@@ -470,11 +471,14 @@ int main() {
             columnModel = glm::scale(columnModel, column.size);
 
             shadowMapProgram.SetMat4("model", columnModel);
+            shadowMapProgram.SetVec3("scale", column.size);
 
             glDrawElements(GL_TRIANGLES, COLUMN_INDEX_COUNT, GL_UNSIGNED_INT, 0);
         }
         columnVAO.Unbind();
-        
+
+
+
         shadowMapProgram.SetMat4("model", terrainModel);
         terrainVAO.Bind();
         glDrawElements(GL_TRIANGLES, terrain.indices.size(), GL_UNSIGNED_INT, 0);
@@ -605,11 +609,11 @@ int main() {
             glm::mat4 columnModel = glm::mat4(1.0f);
             columnModel = glm::translate(columnModel, column.position);
             columnModel = glm::scale(columnModel, column.size);
-            
+
             columnShader.SetMat4("modelMatrix", columnModel);
             columnShader.SetVec3("scale", column.size);
-            
-            glDrawElements(GL_TRIANGLES, COLUMN_INDEX_COUNT, GL_UNSIGNED_INT, 0);  
+
+            glDrawElements(GL_TRIANGLES, COLUMN_INDEX_COUNT, GL_UNSIGNED_INT, 0);
         }
         columnVAO.Unbind();
 
@@ -643,26 +647,26 @@ int main() {
 
         ///////////////// boid rendering /////////////////
 
-        
+
         for (auto& boid : boids) {
             boid.hasCollided = false; // reset collision state at the start of the frame
             boid.hasCollidedWithColumn = false;
         }
 
         // boid rendering and updating
-        for (auto& boid : boids) {       
+        for (auto& boid : boids) {
             for (auto& otherBoid : boids) {
                 if (&boid != &otherBoid && boid.groupID == otherBoid.groupID && !boid.hasCollided && !otherBoid.hasCollided) {
                     if (checkOBBCollision(boid.obb, otherBoid.obb)) {
                         boid.handleCollision(boid, otherBoid);
                     }
-                }  
+                }
             }
             for (const auto& column : columns) {
                 if (checkOBBCollision(boid.obb, column.obb)) {
                     boid.handleCollisionWithColumn(boid, column);  // Handle column collision logic
                 }
-                
+
             }
         }
 
@@ -789,7 +793,7 @@ int main() {
 
         //used for fps calculations
         lastTime = currentTime;
-        
+
     }
 
     glfwDestroyWindow(window);

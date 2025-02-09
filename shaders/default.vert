@@ -3,9 +3,9 @@
 // Positions/Coordinates
 layout (location = 0) in vec3 aPos;
 // Texture Coordinates
-layout (location = 1) in vec2 aTex;
+layout (location = 2) in vec2 aTex;
 // Normals (not necessarily normalized)
-layout (location = 2) in vec3 aNormal;
+layout (location = 1) in vec3 aNormal;
 
 
 
@@ -25,6 +25,8 @@ uniform mat4 camMatrix;
 uniform mat4 model;
 // Shadow map matrix
 uniform mat4 lightSpaceMatrix;
+
+uniform vec3 scale;
 
 void main()
 {
