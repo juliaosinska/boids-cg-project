@@ -34,11 +34,8 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
     // Get current fragment depth
     float currentDepth = projCoords.z;
     
-    // Compute bias based on the normal and light direction
-    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
-    
     // Compare depths and apply bias
-    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    float shadow = currentDepth > closestDepth ? 1.0 : 0.0;
     
     return shadow;
 }
