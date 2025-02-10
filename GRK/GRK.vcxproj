@@ -23,8 +23,16 @@
     <None Include="..\shaders\col.vert" />
     <None Include="..\shaders\cube.frag" />
     <None Include="..\shaders\cube.vert" />
+    <None Include="..\shaders\debug.frag" />
+    <None Include="..\shaders\debug.vert" />
+    <None Include="..\shaders\default.frag" />
+    <None Include="..\shaders\default.vert" />
+    <None Include="..\shaders\depth.frag" />
+    <None Include="..\shaders\depth.vert" />
     <None Include="..\shaders\fish_shader.frag" />
     <None Include="..\shaders\fish_shader.vert" />
+    <None Include="..\shaders\skybox.frag" />
+    <None Include="..\shaders\skybox.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Boids.h" />
@@ -35,8 +43,10 @@
     <ClInclude Include="..\src\EBO.h" />
     <ClInclude Include="..\src\obb.h" />
     <ClInclude Include="..\src\objload.h" />
+    <ClInclude Include="..\src\PerlinNoise.h" />
     <ClInclude Include="..\src\Render_Utils.h" />
     <ClInclude Include="..\src\ShaderClass.h" />
+    <ClInclude Include="..\src\Terrain.h" />
     <ClInclude Include="..\src\Texture.h" />
     <ClInclude Include="..\src\VAO.h" />
     <ClInclude Include="..\src\VBO.h" />
@@ -68,6 +78,10 @@
     <Image Include="..\textures\column_texture.png" />
     <Image Include="..\textures\fish_normal_map.png" />
     <Image Include="..\textures\fish_texture.png" />
+    <Image Include="..\textures\sand2.png" />
+    <Image Include="..\textures\test.png" />
+    <Image Include="..\textures\testBack.png" />
+    <Image Include="..\textures\waterTop.png" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

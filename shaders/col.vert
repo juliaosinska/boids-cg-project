@@ -32,5 +32,5 @@ void main()
     fragTexCoord = vertexTexCoord * scale.xy;;
 
     // position (clip-space)
-    gl_Position = camMatrix * view  * worldPosition;
+    gl_Position = camMatrix * view * worldPosition;
 }
