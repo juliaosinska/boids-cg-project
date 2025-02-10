@@ -24,7 +24,7 @@ void initializeColumnOBB(Column& column) {
 }
 
 GLfloat columnVertices[COLUMN_VERTEX_COUNT] = {
-    // Positions          // Normals           // Texture Coords    // Tangents
+    // positions          // normals           // texture Coords    // tangents
     // front face
     -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,      1.0f, 0.0f, 0.0f,
      0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f,      1.0f, 0.0f, 0.0f,

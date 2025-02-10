@@ -25,12 +25,12 @@ private:
             for (int x = 0; x < width; x++) {
                 float y = perlin.noise(x * 0.1f, 0.0f, z * 0.1f) * scale;
 
-                // Vertex position (x, y, z)
+                // vertex position (x, y, z)
                 vertices.push_back(x);
                 vertices.push_back(y);
                 vertices.push_back(z);
 
-                // Placeholder normals (will be updated)
+                // normals
                 vertices.push_back(0.0f);
                 vertices.push_back(0.0f);
                 vertices.push_back(0.0f);
@@ -41,7 +41,7 @@ private:
             }
         }
 
-        // Generating indices for triangle strips
+        // generating indices for triangle strips
         for (int z = 0; z < height - 1; z++) {
             for (int x = 0; x < width - 1; x++) {
                 int start = z * width + x;
@@ -57,10 +57,10 @@ private:
     }
 
     void calculateNormals() {
-        // Temporary storage for normals
+        // temporary storage for normals
         std::vector<glm::vec3> tempNormals(vertices.size() / 8, glm::vec3(0.0f, 0.0f, 0.0f));
 
-        // Compute normals for each triangle
+        // compute normals for each triangle
         for (size_t i = 0; i < indices.size(); i += 3) {
             int i0 = indices[i];
             int i1 = indices[i + 1];
@@ -78,21 +78,6 @@ private:
             tempNormals[i1] += normal;
             tempNormals[i2] += normal;
         }
-
-        //// Normalize and assign normals to vertices
-        //for (size_t i = 0; i < tempNormals.size(); i++) {
-        //    tempNormals[i] = glm::normalize(tempNormals[i]);
-
-        //    vertices[i * 8 + 3] = tempNormals[i].x;
-        //    vertices[i * 8 + 4] = tempNormals[i].y;
-        //    vertices[i * 8 + 5] = tempNormals[i].z;
-        //}
-        //for (size_t i = 0; i < tempNormals.size(); i++) {
-        //    std::cout << "Vertex " << i << " Normal: ("
-        //        << tempNormals[i].x << ", "
-        //        << tempNormals[i].y << ", "
-        //        << tempNormals[i].z << ")\n";
-        //}
 
     }
 };
