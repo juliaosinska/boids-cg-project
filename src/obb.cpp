@@ -4,7 +4,8 @@
 #include <cmath>
 #include <iostream>
 
-
+ 
+// obb - kind of a rotated version of AABB - hitbox doesnt have to be alligned with world axes
 
 // OBB struct
 struct OBB {
@@ -35,21 +36,27 @@ float projectOBB(const OBB& obb, const glm::vec3& axis) {
 
 // function to check if two OBBs overlap on a specific axis
 bool overlapOnAxis(const OBB& obb1, const OBB& obb2, const glm::vec3& axis) {
-    float projection1 = projectOBB(obb1, axis);
+    //we project both obbs onto the axes
+    float projection1 = projectOBB(obb1, axis); 
     float projection2 = projectOBB(obb2, axis);
     float distance = glm::abs(glm::dot(obb1.center - obb2.center, axis));
+    // if the distance between centers is smaller than the sum of the projections OBBS overlap on this axis
     return distance < (projection1 + projection2);
 }
 
 // function to check for collision between two OBBs using SAT
 bool checkOBBCollision(const OBB& obb1, const OBB& obb2) {
     // rest all 15 potential separating axes
+    // 3 axes of first obb, 3 of second, and 9 from cross product
     for (int i = 0; i < 3; i++) {
         
+        //check axes from 1st and 2nd obbs
         if (!overlapOnAxis(obb1, obb2, obb1.axes[i])) return false;
         if (!overlapOnAxis(obb1, obb2, obb2.axes[i])) return false;
 
     }
+
+    //and here check for the corss product of axes
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             glm::vec3 axis = glm::cross(obb1.axes[i], obb2.axes[j]);
@@ -61,24 +68,4 @@ bool checkOBBCollision(const OBB& obb1, const OBB& obb2) {
 
     // if no separating axis is found, the OBBs are colliding !!!!
     return true;
-}
-
-std::vector<glm::vec3> getOBBVertices(const OBB& obb) {
-    std::vector<glm::vec3> vertices(8);
-
-    // the 8 vertices of the OBB
-    for (int i = 0; i < 8; ++i) {
-        glm::vec3 sign(
-            (i & 1) ? 1.0f : -1.0f,   // x-axis sign
-            (i & 2) ? 1.0f : -1.0f,   // y-axis sign
-            (i & 4) ? 1.0f : -1.0f    // z-axis sign
-        );
-
-        // each vertex is the center plus or minus half-extents along each axis
-        vertices[i] = obb.center + obb.axes[0] * sign.x * obb.halfExtents.x
-            + obb.axes[1] * sign.y * obb.halfExtents.y
-            + obb.axes[2] * sign.z * obb.halfExtents.z;
-    }
-
-    return vertices;
 }

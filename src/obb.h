@@ -25,9 +25,9 @@ bool checkOBBCollision(const OBB& obb1, const OBB& obb2);
 
 std::vector<glm::vec3> getOBBVertices(const OBB& obb);
 
-void drawLine(const glm::vec3& start, const glm::vec3& end);
+//void drawLine(const glm::vec3& start, const glm::vec3& end);
 
-void renderOBB(const OBB& obb);
+//void renderOBB(const OBB& obb);
 
 
 

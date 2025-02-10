@@ -81,7 +81,7 @@ void renderBoids(std::vector<Boid>& boids, Shader& shaderProgram) {
         model *= rotation; // makes our fish more bendy and natural
         model = glm::scale(model, glm::vec3(0.1f));
 
-        // update the obb of each boid
+        // update the obb of each boid - send the current roatation to get the obb faced correctly
         updateOBB(model, glm::vec3(0.0f), boid.obb.axes, boid.obb);
         
         shaderProgram.Activate();

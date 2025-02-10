@@ -11,7 +11,7 @@ void initializeColumnOBB(Column& column) {
     };
 
 
-    glm::vec3 halfExtents = column.size * 0.5f;
+    glm::vec3 halfExtents = column.size * 0.5f; // we take half the size for our obbs
 
     glm::vec3 center = column.position;
 

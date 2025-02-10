@@ -35,6 +35,7 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::ve
     glm::vec3 cohesionForce = cohesion(boids, perceptionRadius) * cohesionWeight;
     glm::vec3 separationForce = separation(boids, 0.7f) * separationWeight; // the allowed distance for boids to be in
     
+    //we adjust the y forces to promote more natural flocking behaviour
     alignForce.y *= 1.2f;       
     cohesionForce.y *= 5.9f;   // fighting the fish columns
     separationForce.y *= 1.4f; 
@@ -45,17 +46,22 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::ve
     glm::vec3 wallNormal = glm::vec3(wallNormalAndDistance);
     float distToWall = wallNormalAndDistance.w;
 
+    // apply wall avoidance if the boid is close to a boundary
     // this will cause our fish to turn gracefully
     if (distToWall < 2.0f) {
+        // stronger avoidance force when closer to the wall
         float avoidStrength = glm::clamp(1.0f - (distToWall / 5.0f), 0.0f, 1.0f); // stronger closer to the wall
+        
+        // calculate the new direction to avoid the wall smoothly
         glm::vec3 desiredDirection = glm::normalize(velocity) + wallNormal * avoidStrength;
         desiredDirection = glm::normalize(desiredDirection);
 
+        // calculate the steering force needed to change direction
         glm::vec3 steering = desiredDirection * maxSpeed - velocity;
         if (glm::length(steering) > maxForce) {
             steering = glm::normalize(steering) * maxForce;
         }
-
+        // reduce the effect of flocking forces near walls to prevent erratic movement
         applyForce(steering * wallAvoidanceWeight);
         float forceReduction = glm::mix(1.0f, 0.2f, avoidStrength);  // 1.0 usually and 0.2 near the walls
         cohesionForce *= forceReduction;
@@ -70,6 +76,7 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::ve
         applyForce(horizontalBiasForce);
     }
     else {
+        // reduce forces if the boid has hit a column to simulate an impact and lessen erratic moves
         applyForce(alignForce * 0.5f);
         applyForce(cohesionForce * 0.5f);
         applyForce(separationForce * 0.5f);
@@ -80,6 +87,7 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::ve
         acceleration = glm::normalize(acceleration) * maxForce;
     }
 
+    // smoothly update velocity to prevent sudden changes in speed
     velocity = glm::mix(velocity, velocity + acceleration, 0.2f); 
    
     if (glm::length(velocity) > maxSpeed) {
@@ -176,16 +184,20 @@ void  Boid::handleCollision(Boid& boid1, Boid& boid2) {
 
     if(velocityAlongNormal > 0) return; // this means the boids are already moving apart, so everything good
 
-    float e = 0.8f; // elasticity (bounce factor) - 1 is a perfect bounce, less than 1 is inelastic.
+    float e = 0.8f; // elasticity (bounce factor) - 1 is a perfect bounce, less than 1 is inelastic
     float j = -(1 + e) * velocityAlongNormal;
 
-    // apply the impulse to each boid (basic response without mass for simplicity)
+    // apply the impulse to each boid 
     glm::vec3 impulse = j * collisionNormal;
 
     boid1.velocity += impulse;
-
-    // apply the opposite impulse to boid2 (push it away from boid1)
+    // apply the opposite impulse to boid2
     boid2.velocity -= impulse;
+
+    float pushFactor = 0.05f; // Controls how much to push them apart
+    glm::vec3 separation = collisionNormal * pushFactor;
+    boid1.position += separation;
+    boid2.position -= separation;
 
     boid1.hasCollided = true;
     boid2.hasCollided = true;
@@ -199,7 +211,7 @@ void Boid::handleCollisionWithColumn(Boid& boid, const Column& column) {
     float distToColumn = glm::length(dirToColumn);
 
     // check if the boid is too close to the column along any axis
-    if (distToColumn < glm::length(column.obb.halfExtents) * 0.5f) {
+    if (distToColumn < glm::length(column.obb.halfExtents) * 1.2f) {
         // relative position of the boid in the column's local space
         glm::vec3 localPos = position - column.position;
 
@@ -212,6 +224,7 @@ void Boid::handleCollisionWithColumn(Boid& boid, const Column& column) {
         // calculate overlap in each axis
         glm::vec3 overlap = glm::vec3(0.0f);
         for (int i = 0; i < 3; ++i) {
+            //check if boid extends past the columns bounds in any axiss
             if (std::abs(projection[i]) > column.obb.halfExtents[i]) {
                 overlap[i] = (std::abs(projection[i]) - column.obb.halfExtents[i]);
             }
@@ -228,17 +241,20 @@ void Boid::handleCollisionWithColumn(Boid& boid, const Column& column) {
             glm::vec3 pushForce = horizontalPushDirection * glm::length(overlap) * 1.8f;
             pushForce += glm::vec3(2.0f, 0.0f, 0.0f); // make this fish escape to the side
             applyForce(pushForce);
-            velocity = glm::normalize(pushForce) * maxSpeed * 2.0f;
+            //velocity = glm::normalize(pushForce) * maxSpeed * 2.0f;
+            velocity = glm::mix(velocity, glm::normalize(pushForce) * maxSpeed, 0.5f);
         }
     }
 }
 
+
+//aligement - makes boids allign their velocities to other members of the group
 glm::vec3 Boid::alignment(const std::vector<Boid>& boids, float neighborDist) {
     glm::vec3 steering(0.0f);
     int total = 0;             // number of neighbors
 
     for (const Boid& other : boids) {
-        if (other.groupID == groupID) {
+        if (other.groupID == groupID) { //only allign with boids from same group
             float distance = glm::distance(position, other.position);
             if (&other != this && distance < neighborDist) { // check if within perception radius
                 steering += other.velocity; // add neighbor's velocity
@@ -249,15 +265,17 @@ glm::vec3 Boid::alignment(const std::vector<Boid>& boids, float neighborDist) {
 
     if (total > 0) {
         steering /= static_cast<float>(total); // average velocity
-        steering = glm::normalize(steering) * maxSpeed; // match speed
-        steering -= velocity; // steer towards average
+        steering = glm::normalize(steering) * maxSpeed; // match speed - the direction + max speed
+        steering -= velocity; // steer towards average : diff btwn desired vel and current 
         if (glm::length(steering) > maxForce) {
-            steering = glm::normalize(steering) * maxSpeed * 0.5f; // limit force
+            steering = glm::normalize(steering) * maxSpeed * 0.6f; // limit force so its not too jerky
         }
     }
     return steering;
 }
 
+
+// cohesion - moving the boid towards the center of the flock
 
 glm::vec3 Boid::cohesion(const std::vector<Boid>& boids, float neighborDist) {
     glm::vec3 centerOfMass(0.0f); // store the average position of neighbors
@@ -279,9 +297,8 @@ glm::vec3 Boid::cohesion(const std::vector<Boid>& boids, float neighborDist) {
         centerOfMass /= static_cast<float>(total); // average position of neighbors
         glm::vec3 desired = centerOfMass - position; // vector toward the center
 
-
         if (glm::length(desired) > 0.2f) {
-            desired = glm::normalize(desired) * (maxSpeed/3);
+            desired = glm::normalize(desired) * (maxSpeed); // normalize the dir and scale it down
         }
         else {
             return glm::vec3(0.0f); // no need to move if already at the center
@@ -301,6 +318,7 @@ glm::vec3 Boid::cohesion(const std::vector<Boid>& boids, float neighborDist) {
 }
 
 
+// separation - prevents boids from clumoing too close
 glm::vec3 Boid::separation(const std::vector<Boid>& boids, float desiredSeparation) {
     glm::vec3 steer(0.0f);
     int total = 0;
@@ -308,8 +326,8 @@ glm::vec3 Boid::separation(const std::vector<Boid>& boids, float desiredSeparati
     for (const Boid& other : boids) {
         if (other.groupID == groupID) {
             float distance = glm::distance(position, other.position);
-            if (&other != this && distance < desiredSeparation) {
-                glm::vec3 diff = position - other.position;
+            if (&other != this && distance < desiredSeparation) { //if too close
+                glm::vec3 diff = position - other.position; // dir vector to move away to
                 diff = glm::normalize(diff) / (distance * distance); // weight by distance (closer = stronger force)
                 steer += diff;
                 total++;
@@ -318,7 +336,7 @@ glm::vec3 Boid::separation(const std::vector<Boid>& boids, float desiredSeparati
     }
 
     if (total > 0) {
-        steer /= static_cast<float>(total);
+        steer /= static_cast<float>(total); 
     }
 
     if (glm::length(steer) > 0) {
