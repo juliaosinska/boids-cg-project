@@ -8,9 +8,8 @@
 #include <postprocess.h>
 
 
-
 void Core::RenderContext::initFromAssimpMesh(aiMesh* mesh) {
-    // Clear existing buffers
+    // clear existing buffers
     if (vertexArray != 0) {
         glDeleteVertexArrays(1, &vertexArray);
         vertexArray = 0;
@@ -24,58 +23,58 @@ void Core::RenderContext::initFromAssimpMesh(aiMesh* mesh) {
         vertexIndexBuffer = 0;
     }
 
-    // Check if the mesh has texture coordinates
+    // check if the mesh has texture coordinates
     bool hasTexCoords = mesh->mTextureCoords[0] != nullptr;
     if (!hasTexCoords) {
         std::cout << "No UV coordinates found in the mesh.\n";
     }
 
-    // Check if the mesh has tangents (required for normal mapping)
+    // check if the mesh has tangents (required for normal mapping)
     bool hasTangents = mesh->mTangents != nullptr;
     if (!hasTangents) {
         std::cout << "No tangents found in the mesh.\n";
     }
 
-    // Prepare vectors to store vertex data
+    // prepare vectors to store vertex data
     std::vector<float> vertices;
     std::vector<unsigned int> indices;
 
-    // Iterate through all vertices
+    // iterate through all vertices
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        // Positions
+        // positions
         vertices.push_back(mesh->mVertices[i].x);
         vertices.push_back(mesh->mVertices[i].y);
         vertices.push_back(mesh->mVertices[i].z);
 
-        // Normals
+        // normals
         vertices.push_back(mesh->mNormals[i].x);
         vertices.push_back(mesh->mNormals[i].y);
         vertices.push_back(mesh->mNormals[i].z);
 
-        // Texture coordinates (if available)
+        // texture coordinates (if available)
         if (hasTexCoords) {
             vertices.push_back(mesh->mTextureCoords[0][i].x);
             vertices.push_back(mesh->mTextureCoords[0][i].y);
         }
         else {
-            vertices.push_back(0.0f); // Default UV
+            vertices.push_back(0.0f); // default UV
             vertices.push_back(0.0f);
         }
 
-        // Tangents (if available)
+        // tangents (if available)
         if (hasTangents) {
             vertices.push_back(mesh->mTangents[i].x);
             vertices.push_back(mesh->mTangents[i].y);
             vertices.push_back(mesh->mTangents[i].z);
         }
         else {
-            vertices.push_back(1.0f); // Default tangent
+            vertices.push_back(1.0f); // default tangent
             vertices.push_back(0.0f);
             vertices.push_back(0.0f);
         }
     }
 
-    // Iterate through all faces and store indices
+    // iterate through all faces and store indices
     for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
         aiFace face = mesh->mFaces[i];
         for (unsigned int j = 0; j < face.mNumIndices; j++) {
@@ -83,53 +82,46 @@ void Core::RenderContext::initFromAssimpMesh(aiMesh* mesh) {
         }
     }
 
-    // Generate and bind the VAO
+    // generate and bind the VAO
     glGenVertexArrays(1, &vertexArray);
     glBindVertexArray(vertexArray);
 
-    // Generate and bind the VBO
+    // generate and bind the VBO
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
-    // Generate and bind the EBO
+    // generate and bind the EBO
     glGenBuffers(1, &vertexIndexBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndexBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
-    // Set up vertex attribute pointers
-    // Positions (location = 0)
+    // set up vertex attribute pointers
+    // positions (location = 0)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
 
-    // Normals (location = 1)
+    // normals (location = 1)
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
 
-    // Texture coordinates (location = 2)
+    // texture coordinates (location = 2)
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
 
-    // Tangents (location = 3)
+    // tangents (location = 3)
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float)));
 
-    // Unbind the VAO
+    // unbind the VAO
     glBindVertexArray(0);
 
-    // Store the number of indices for rendering
+    // store the number of indices for rendering
     indexCount = indices.size();
 
 
     std::cout << "Mesh loaded successfully with " << mesh->mNumVertices << " vertices and " << indexCount << " indices.\n";
-    /*for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        std::cout << "Vertex " << i << ": ("
-            << mesh->mVertices[i].x << ", "
-            << mesh->mVertices[i].y << ", "
-            << mesh->mVertices[i].z << ")\n";
-    }*/
 }
-
 
 void Core::DrawVertexArray(const float * vertexArray, int numVertices, int elementSize )
 {
@@ -146,7 +138,6 @@ void Core::DrawVertexArrayIndexed( const float * vertexArray, const int * indexA
 
 	glDrawElements(GL_TRIANGLES, numIndexes, GL_UNSIGNED_INT, indexArray);
 }
-
 
 void Core::DrawVertexArray( const VertexData & data )
 {

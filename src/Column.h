@@ -6,7 +6,7 @@
 #include "obb.h"
 
 struct Column {
-    glm::vec3 position; // Column center position
+    glm::vec3 position; // column center position
     glm::vec3 size;     // (width, height, depth)
     OBB obb;
 };

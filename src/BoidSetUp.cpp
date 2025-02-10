@@ -9,23 +9,23 @@
 #include "obb.h"
 
 
-// Pyramid vertices
+// pyramid vertices (initial boid structure -> changed to fish model)
 GLfloat pyramidVertices[] = {
-    // Base (square)
-    -0.1f,  0.0f,  0.1f,  1.0f, 0.0f, 0.0f, // Bottom-left
-     0.1f,  0.0f,  0.1f,  0.0f, 1.0f, 0.0f, // Bottom-right
-     0.1f,  0.0f, -0.1f,  0.0f, 0.0f, 1.0f, // Top-right
-    -0.1f,  0.0f, -0.1f,  1.0f, 1.0f, 0.0f, // Top-left
+    // base (square)
+    -0.1f,  0.0f,  0.1f,  1.0f, 0.0f, 0.0f, // bottom-left
+     0.1f,  0.0f,  0.1f,  0.0f, 1.0f, 0.0f, // bottom-right
+     0.1f,  0.0f, -0.1f,  0.0f, 0.0f, 1.0f, // top-right
+    -0.1f,  0.0f, -0.1f,  1.0f, 1.0f, 0.0f, // top-left
 
-    // Peak (triangle faces)
-     0.0f,  0.2f,  0.0f,  1.0f, 1.0f, 1.0f, // Top (shared)
+    // peak (triangle faces)
+     0.0f,  0.2f,  0.0f,  1.0f, 1.0f, 1.0f, // top (shared)
 };
 
 GLuint pyramidIndices[] = {
-    // Base
+    // base
     0, 1, 2,
     0, 2, 3,
-    // Sides
+    // sides
     0, 1, 4,
     1, 2, 4,
     2, 3, 4,
@@ -34,7 +34,6 @@ GLuint pyramidIndices[] = {
 
 // OpenGL buffers
 GLuint pVAO, pVBO, pEBO;
-
 
 void setupPyramid() {
     glGenVertexArrays(1, &pVAO);
@@ -66,8 +65,8 @@ void renderBoids(std::vector<Boid>& boids, Shader& shaderProgram) {
         if (glm::length(forward) < 1e-6f) {
             forward = glm::vec3(1.0f, 0.0f, 0.0f); // default all fish to face right if no movement
         }
-        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f); // World up
-        glm::vec3 right = glm::normalize(glm::cross(up, forward)); // Perpendicular right
+        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f); // world up
+        glm::vec3 right = glm::normalize(glm::cross(up, forward)); // perpendicular right
         glm::vec3 adjustedUp = glm::cross(forward, right);
 
         // create a rotation matrix from these vectors
@@ -79,13 +78,12 @@ void renderBoids(std::vector<Boid>& boids, Shader& shaderProgram) {
         glm::mat4 model = glm::mat4(1.0f);
 
         model = glm::translate(model, boid.position);
-        model *= rotation; // makes our fish more bendy and natural !
+        model *= rotation; // makes our fish more bendy and natural
         model = glm::scale(model, glm::vec3(0.1f));
 
-        //update the obb of each boid
+        // update the obb of each boid
         updateOBB(model, glm::vec3(0.0f), boid.obb.axes, boid.obb);
         
-
         shaderProgram.Activate();
         shaderProgram.SetMat4("modelMatrix", model);
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
@@ -114,7 +112,7 @@ void setUpBoids(std::vector<Boid>& boids, int numGroups, int numBoidsPerGroup) {
     };
 
     for (int group = 0; group < numGroups; ++group) {
-        // Assign a unique position offset for each group to separate them
+        // assign a unique position offset for each group to separate them
         glm::vec3 groupOffset(
             static_cast<float>(rand() % 220 - 100) / 10.0f,
             static_cast<float>(rand() % 200 - 100) / 10.0f,
@@ -134,17 +132,7 @@ void setUpBoids(std::vector<Boid>& boids, int numGroups, int numBoidsPerGroup) {
                 static_cast<float>(rand() % 10 - 5) / 10.0f
             );
 
-            //OBB obb;
-            //obb.center = startPosition;
-
-            //// local axes before rotation (aligned with world axes) - we will rotate them with our boids
-            //obb.axes[0] = glm::vec3(1.0f, 0.0f, 0.0f);
-            //obb.axes[1] = glm::vec3(0.0f, 1.0f, 0.0f);
-            //obb.axes[2] = glm::vec3(0.0f, 0.0f, 1.0f);
-
-            //obbs.push_back(obb);
-
-            // Add the boid to the list
+            // add the boid to the list
             glm::vec3 groupColor = groupColors[group]; 
             boids.emplace_back(startPosition, startVelocity, group, groupColor);
         }

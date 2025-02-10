@@ -1,8 +1,6 @@
 #include "Boids.h"
 #include "Column.h"
 
-
-// tutaj mozna cos zdynamizowac, idk dac uzytkownikowi moc zmieniania maxSpeed boidow?
 Boid::Boid(glm::vec3 startPosition, glm::vec3 startVelocity, int groupID, glm::vec3 color)
     : position(startPosition),
     velocity(startVelocity),
@@ -23,21 +21,13 @@ Boid::Boid(glm::vec3 startPosition, glm::vec3 startVelocity, int groupID, glm::v
     obb.axes[2] = glm::vec3(0.0f, 0.0f, 1.0f); // Z-axix
 
     obb.halfExtents = glm::vec3(0.4f, 0.2f, 0.1f); // this is the size of our fish hitbox
-    //could add something dynamic here mayhaps?
 }
 
 void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::vector<Column>& columns, float alignWeight, float cohesionWeight, float separationWeight, float horizontalBiasStrength) {
     // define cube boundaries - if we want a bigger aquarium, gotta change it here
     const float boundaryThreshold = 1.0f;
-    /*const float cubeMin = -10.0f;
-    const float cubeMax = 10.0f;*/
-    const glm::vec3 aquariumMin = glm::vec3(-20.0f, -10.0f, -10.0f); // Half-size in each direction
+    const glm::vec3 aquariumMin = glm::vec3(-20.0f, -10.0f, -10.0f); // half-size in each direction
     const glm::vec3 aquariumMax = glm::vec3(20.0f, 10.0f, 10.0f);
-
-    // Define weights for the behaviors
-    //float alignWeight = 0.4; //zmniejszone sprawia ze ryby w malych stadach tak dziko nie wibruj¹
-    //float cohesionWeight = 0.03f;
-    //float separationWeight = 0.4f;
 
     float wallAvoidanceWeight = 0.8f; 
 
@@ -46,10 +36,9 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::ve
     glm::vec3 separationForce = separation(boids, 0.7f) * separationWeight; // the allowed distance for boids to be in
     
     alignForce.y *= 1.2f;       
-    cohesionForce.y *= 5.9f;   // fighting the fish columns !!!!!!!!!!
+    cohesionForce.y *= 5.9f;   // fighting the fish columns
     separationForce.y *= 1.4f; 
 
-    //float horizontalBiasStrength = 0.1f; // Adjust this value to control the strength of the bias
     glm::vec3 horizontalBiasForce = glm::vec3(0.0f, -velocity.y * horizontalBiasStrength, 0.0f);
 
     glm::vec4 wallNormalAndDistance = getBoundaryNormalAndDistance(position, aquariumMin, aquariumMax);
@@ -58,7 +47,7 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::ve
 
     // this will cause our fish to turn gracefully
     if (distToWall < 2.0f) {
-        float avoidStrength = glm::clamp(1.0f - (distToWall / 5.0f), 0.0f, 1.0f); // Stronger closer to the wall
+        float avoidStrength = glm::clamp(1.0f - (distToWall / 5.0f), 0.0f, 1.0f); // stronger closer to the wall
         glm::vec3 desiredDirection = glm::normalize(velocity) + wallNormal * avoidStrength;
         desiredDirection = glm::normalize(desiredDirection);
 
@@ -68,7 +57,7 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::ve
         }
 
         applyForce(steering * wallAvoidanceWeight);
-        float forceReduction = glm::mix(1.0f, 0.2f, avoidStrength);  // 1.0 zazwyczaj a  0.2 blisko scian
+        float forceReduction = glm::mix(1.0f, 0.2f, avoidStrength);  // 1.0 usually and 0.2 near the walls
         cohesionForce *= forceReduction;
         separationForce *= forceReduction;
         alignForce *= forceReduction;
@@ -77,17 +66,15 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::ve
     if (!hasCollidedWithColumn) {
         applyForce(alignForce);
         applyForce(cohesionForce);
-        applyForce(separationForce); // jesli to sobie zakomentujcie to mozna zobaczyc ze hitboxy kinda dzialaja?
+        applyForce(separationForce);
         applyForce(horizontalBiasForce);
     }
     else {
         applyForce(alignForce * 0.5f);
         applyForce(cohesionForce * 0.5f);
-        applyForce(separationForce * 0.5f); // jesli to sobie zakomentujcie to mozna zobaczyc ze hitboxy kinda dzialaja?
+        applyForce(separationForce * 0.5f);
         applyForce(horizontalBiasForce * 0.5f);
     }
-
-    // make the velocity a bit smooter - the fish wont snap so hard anymore :(
 
     if (glm::length(acceleration) > maxForce) {
         acceleration = glm::normalize(acceleration) * maxForce;
@@ -101,15 +88,13 @@ void Boid::update(const std::vector<Boid>& boids, float deltaTime, const std::ve
     
     position += velocity ;
     
-    //if a fish manages to go through our wall avoidence, this will stop them from popping out of the box
+    // if a fish manages to go through our wall avoidence, this will stop them from popping out of the box
     if (position.x < aquariumMin.x) position.x = aquariumMin.x + boundaryThreshold;
     if (position.x > aquariumMax.x) position.x = aquariumMax.x - boundaryThreshold;
     if (position.y < aquariumMin.y) position.y = aquariumMin.y + boundaryThreshold;
     if (position.y > aquariumMax.y) position.y = aquariumMax.y - boundaryThreshold;
     if (position.z < aquariumMin.z) position.z = aquariumMin.z + boundaryThreshold;
     if (position.z > aquariumMax.z) position.z = aquariumMax.z - boundaryThreshold;
-
-    
 
     // reset acceleration for the next frame
     acceleration = glm::vec3(0.0f);
@@ -180,7 +165,7 @@ void Boid::applyForce(glm::vec3 force) {
 }
 
 void  Boid::handleCollision(Boid& boid1, Boid& boid2) {
-    //vector between the two boids
+    // vector between the two boids
     glm::vec3 collisionNormal = glm::normalize(boid1.position - boid2.position);
 
     if (glm::length(collisionNormal) < 1e-6f) {
@@ -191,15 +176,15 @@ void  Boid::handleCollision(Boid& boid1, Boid& boid2) {
 
     if(velocityAlongNormal > 0) return; // this means the boids are already moving apart, so everything good
 
-    float e = 0.8f; // Elasticity (bounce factor). 1 is a perfect bounce, less than 1 is inelastic.
+    float e = 0.8f; // elasticity (bounce factor) - 1 is a perfect bounce, less than 1 is inelastic.
     float j = -(1 + e) * velocityAlongNormal;
 
-    // Apply the impulse to each boid (basic response without mass for simplicity)
+    // apply the impulse to each boid (basic response without mass for simplicity)
     glm::vec3 impulse = j * collisionNormal;
 
     boid1.velocity += impulse;
 
-    // Apply the opposite impulse to boid2 (push it away from boid1)
+    // apply the opposite impulse to boid2 (push it away from boid1)
     boid2.velocity -= impulse;
 
     boid1.hasCollided = true;
@@ -232,12 +217,12 @@ void Boid::handleCollisionWithColumn(Boid& boid, const Column& column) {
             }
         }
 
-        // If there is overlap along any axis, push the boid away
+        // if there is overlap along any axis, push the boid away
         if (glm::length(overlap) > 0.0f) {
             
             glm::vec3 horizontalPushDirection = glm::normalize(glm::vec3(dirToColumn.x, 0.0f, dirToColumn.z));
             if (glm::length(horizontalPushDirection) < 0.01f) {
-                horizontalPushDirection = glm::vec3(1.0f, 0.0f, 0.0f); // Default to an arbitrary X direction
+                horizontalPushDirection = glm::vec3(1.0f, 0.0f, 0.0f); // default to an arbitrary X direction
             }
 
             glm::vec3 pushForce = horizontalPushDirection * glm::length(overlap) * 1.8f;
@@ -255,8 +240,8 @@ glm::vec3 Boid::alignment(const std::vector<Boid>& boids, float neighborDist) {
     for (const Boid& other : boids) {
         if (other.groupID == groupID) {
             float distance = glm::distance(position, other.position);
-            if (&other != this && distance < neighborDist) { // Check if within perception radius
-                steering += other.velocity; // Add neighbor's velocity
+            if (&other != this && distance < neighborDist) { // check if within perception radius
+                steering += other.velocity; // add neighbor's velocity
                 total++;
             }
         }      
@@ -265,9 +250,9 @@ glm::vec3 Boid::alignment(const std::vector<Boid>& boids, float neighborDist) {
     if (total > 0) {
         steering /= static_cast<float>(total); // average velocity
         steering = glm::normalize(steering) * maxSpeed; // match speed
-        steering -= velocity; // Steer towards average
+        steering -= velocity; // steer towards average
         if (glm::length(steering) > maxForce) {
-            steering = glm::normalize(steering) * maxSpeed * 0.5f; // Limit force
+            steering = glm::normalize(steering) * maxSpeed * 0.5f; // limit force
         }
     }
     return steering;
@@ -280,9 +265,9 @@ glm::vec3 Boid::cohesion(const std::vector<Boid>& boids, float neighborDist) {
 
     for (const Boid& other : boids) {
         if (other.groupID == groupID) {
-            float distance = glm::distance(position, other.position); //distance between 2 boys
+            float distance = glm::distance(position, other.position); // distance between 2 boys
 
-            // if boys are close to each other, sum up their position and their total
+            // if boids are close to each other, sum up their position and their total
             if (&other != this && distance < neighborDist) {
                 centerOfMass += other.position;
                 total++;
@@ -305,13 +290,13 @@ glm::vec3 Boid::cohesion(const std::vector<Boid>& boids, float neighborDist) {
         // calculate steering force (desired velocity - current velocity)
         glm::vec3 steering = desired - velocity;
         if (glm::length(steering) > maxForce) {
-            steering = glm::normalize(steering) * maxForce; // Limit steering force
+            steering = glm::normalize(steering) * maxForce; // limit steering force
         }
 
         return steering;
     }
 
-    // no boys, no cohesion force
+    // no boids, no cohesion force
     return glm::vec3(0.0f);
 }
 
@@ -337,9 +322,9 @@ glm::vec3 Boid::separation(const std::vector<Boid>& boids, float desiredSeparati
     }
 
     if (glm::length(steer) > 0) {
-        steer = glm::normalize(steer) * maxSpeed - velocity; // Steering = desired - current velocity
+        steer = glm::normalize(steer) * maxSpeed - velocity; // steering = desired - current velocity
         if (glm::length(steer) > maxForce) {
-            steer = glm::normalize(steer) * maxForce; // Limit steering force
+            steer = glm::normalize(steer) * maxForce; // limit steering force
         }
     }
 

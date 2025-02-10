@@ -15,18 +15,16 @@ struct OBB {
 
 // function to update the OBB based on the boid's transformation
 void updateOBB(const glm::mat4& transform, const glm::vec3& localCenter, const glm::vec3 localAxes[3], OBB& obb) {
-    // Update the OBB center - we take the local center of the fish, so our extends will be correct
+    // update the OBB center - we take the local center of the fish, so our extends will be correct
     obb.center = glm::vec3(transform * glm::vec4(localCenter, 1.0f));
-    
-    //std::cout << obb.center.x; std::cout << std::endl; std::cout << obb.center.y;
 
-    // Update the OBB axes (rotate the local axes by the boid's rotation)
+    // update the OBB axes (rotate the local axes by the boid's rotation)
     for (int i = 0; i < 3; i++) {
         obb.axes[i] = glm::normalize(glm::vec3(transform * glm::vec4(localAxes[i], 0.0f)));
     }
 }
 
-// Function to project an OBB onto an axis - this will allow us to use SAT to check for collisions
+// function to project an OBB onto an axis - this will allow us to use SAT to check for collisions
 float projectOBB(const OBB& obb, const glm::vec3& axis) {
     return glm::dot(obb.halfExtents, glm::abs(glm::vec3(
         glm::dot(axis, obb.axes[0]),
@@ -35,7 +33,7 @@ float projectOBB(const OBB& obb, const glm::vec3& axis) {
     )));
 }
 
-// Function to check if two OBBs overlap on a specific axis
+// function to check if two OBBs overlap on a specific axis
 bool overlapOnAxis(const OBB& obb1, const OBB& obb2, const glm::vec3& axis) {
     float projection1 = projectOBB(obb1, axis);
     float projection2 = projectOBB(obb2, axis);
@@ -43,7 +41,7 @@ bool overlapOnAxis(const OBB& obb1, const OBB& obb2, const glm::vec3& axis) {
     return distance < (projection1 + projection2);
 }
 
-// Function to check for collision between two OBBs using SAT
+// function to check for collision between two OBBs using SAT
 bool checkOBBCollision(const OBB& obb1, const OBB& obb2) {
     // rest all 15 potential separating axes
     for (int i = 0; i < 3; i++) {
@@ -61,14 +59,14 @@ bool checkOBBCollision(const OBB& obb1, const OBB& obb2) {
         }
     }
 
-    // If no separating axis is found, the OBBs are colliding !!!!
+    // if no separating axis is found, the OBBs are colliding !!!!
     return true;
 }
 
 std::vector<glm::vec3> getOBBVertices(const OBB& obb) {
     std::vector<glm::vec3> vertices(8);
 
-    // The 8 vertices of the OBB
+    // the 8 vertices of the OBB
     for (int i = 0; i < 8; ++i) {
         glm::vec3 sign(
             (i & 1) ? 1.0f : -1.0f,   // x-axis sign
@@ -76,7 +74,7 @@ std::vector<glm::vec3> getOBBVertices(const OBB& obb) {
             (i & 4) ? 1.0f : -1.0f    // z-axis sign
         );
 
-        // Each vertex is the center plus or minus half-extents along each axis
+        // each vertex is the center plus or minus half-extents along each axis
         vertices[i] = obb.center + obb.axes[0] * sign.x * obb.halfExtents.x
             + obb.axes[1] * sign.y * obb.halfExtents.y
             + obb.axes[2] * sign.z * obb.halfExtents.z;
@@ -84,34 +82,3 @@ std::vector<glm::vec3> getOBBVertices(const OBB& obb) {
 
     return vertices;
 }
-
-//void renderOBB(const OBB& obb) {
-    //std::vector<glm::vec3> vertices = getOBBVertices(obb);
-
-    //// Connect the vertices to draw the edges
-    //// Bottom square
-    //drawLine(vertices[0], vertices[1]);
-    //drawLine(vertices[1], vertices[3]);
-    //drawLine(vertices[3], vertices[2]);
-    //drawLine(vertices[2], vertices[0]);
-
-    //// Top square
-    //drawLine(vertices[4], vertices[5]);
-    //drawLine(vertices[5], vertices[7]);
-    //drawLine(vertices[7], vertices[6]);
-    //drawLine(vertices[6], vertices[4]);
-
-    //// Connect top and bottom
-    //drawLine(vertices[0], vertices[4]);
-    //drawLine(vertices[1], vertices[5]);
-    //drawLine(vertices[2], vertices[6]);
-    //drawLine(vertices[3], vertices[7]);
-//}
-
-//void drawLine(const glm::vec3& start, const glm::vec3& end) {
-//    // OpenGL code to draw a line between start and end (for example)
-//    glBegin(GL_LINES);
-//    glVertex3f(start.x, start.y, start.z);
-//    glVertex3f(end.x, end.y, end.z);
-//    glEnd();
-//}

@@ -9,16 +9,16 @@
 class VBO
 {
 public:
-	// Reference ID of the Vertex Buffer Object
+	// reference ID of the VBO
 	GLuint ID;
-	// Constructor that generates a Vertex Buffer Object and links it to vertices
+	// constructor that generates a VBO and links it to vertices
 	VBO(GLfloat* vertices, GLsizeiptr size);
 
-	// Binds the VBO
+	// binds the VBO
 	void Bind();
-	// Unbinds the VBO
+	// unbinds the VBO
 	void Unbind();
-	// Deletes the VBO
+	// deletes the VBO
 	void Delete();
 };
 
