@@ -106,6 +106,9 @@
     <ClInclude Include="..\src\Terrain.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\Skybox.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Boids.cpp">
@@ -162,9 +165,6 @@
     <ClCompile Include="..\src\obb.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Source.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\column.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
@@ -182,16 +182,16 @@
     <Image Include="..\textures\column_texture.png">
       <Filter>Pliki zasobów</Filter>
     </Image>
-    <Image Include="..\textures\sand2.png">
+    <Image Include="..\textures\sand_texture.png">
       <Filter>Pliki zasobów</Filter>
     </Image>
-    <Image Include="..\textures\test.png">
+    <Image Include="..\textures\skybox_base.png">
       <Filter>Pliki zasobów</Filter>
     </Image>
-    <Image Include="..\textures\testBack.png">
+    <Image Include="..\textures\skybox_back.png">
       <Filter>Pliki zasobów</Filter>
     </Image>
-    <Image Include="..\textures\waterTop.png">
+    <Image Include="..\textures\skybox_top.png">
       <Filter>Pliki zasobów</Filter>
     </Image>
   </ItemGroup>

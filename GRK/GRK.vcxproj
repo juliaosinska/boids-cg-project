@@ -46,6 +46,7 @@
     <ClInclude Include="..\src\PerlinNoise.h" />
     <ClInclude Include="..\src\Render_Utils.h" />
     <ClInclude Include="..\src\ShaderClass.h" />
+    <ClInclude Include="..\src\Skybox.h" />
     <ClInclude Include="..\src\Terrain.h" />
     <ClInclude Include="..\src\Texture.h" />
     <ClInclude Include="..\src\VAO.h" />
@@ -68,7 +69,6 @@
     <ClCompile Include="..\src\obb.cpp" />
     <ClCompile Include="..\src\Render_Utils.cpp" />
     <ClCompile Include="..\src\ShaderClass.cpp" />
-    <ClCompile Include="..\src\Source.cpp" />
     <ClCompile Include="..\src\stb_image.cpp" />
     <ClCompile Include="..\src\VAO.cpp" />
     <ClCompile Include="..\src\VBO.cpp" />
@@ -78,10 +78,10 @@
     <Image Include="..\textures\column_texture.png" />
     <Image Include="..\textures\fish_normal_map.png" />
     <Image Include="..\textures\fish_texture.png" />
-    <Image Include="..\textures\sand2.png" />
-    <Image Include="..\textures\test.png" />
-    <Image Include="..\textures\testBack.png" />
-    <Image Include="..\textures\waterTop.png" />
+    <Image Include="..\textures\sand_texture.png" />
+    <Image Include="..\textures\skybox_base.png" />
+    <Image Include="..\textures\skybox_back.png" />
+    <Image Include="..\textures\skybox_top.png" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
