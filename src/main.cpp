@@ -459,7 +459,8 @@ int main() {
         std::vector<Column> columns = {
             {glm::vec3(5.0f, boxBottom + (15.0f / 2.0f), 5.0f), glm::vec3(1.0f, 15.0f, 1.0f)},
             {glm::vec3(-5.0f, boxBottom + (11.0f / 2.0f), -5.0f), glm::vec3(2.0f, 12.0f, 2.0f)},
-            {glm::vec3(-12.0f, boxBottom + (10.0f / 2.0f), 6.0f), glm::vec3(2.0f, 10.0f, 2.0f)}
+            {glm::vec3(-12.0f, boxBottom + (10.0f / 2.0f), 6.0f), glm::vec3(2.0f, 10.0f, 2.0f)},
+            {glm::vec3(12.0f, boxBottom + (12.0f / 2.0f), 1.0f), glm::vec3(2.0f, 12.0f, 2.0f)}
         };
 
         for (auto& column : columns) {
